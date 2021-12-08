@@ -2,9 +2,9 @@
 name = "quilt"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["The quilt team at RC"]
 
 [dependencies]
 anyhow = "1.0.51"
+clap = { version = "3.0.0-rc.0", features = ["derive"] }
 image = "0.23.14"

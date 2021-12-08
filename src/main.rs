@@ -10,11 +10,24 @@ pub use matrix::{Matrix, MatrixPoint};
 pub use pixel::Pixel;
 pub use vm::VM;
 
+use clap::Parser as ClapParser;
 use parser::{parse, pixels};
 
+/// Run a quilt program
+#[derive(ClapParser)]
+#[clap(about, version, author)]
+struct Args {
+    /// A quilt program
+    file: String,
+
+    /// Pixel size
+    #[clap(short, long, default_value_t = 1)]
+    pixel_size: u8,
+}
+
 fn main() {
-    parse(pixels("examples/hello_world_x20.png", 20).unwrap());
-    let program = parse(pixels("examples/hello_world.png", 1).unwrap());
+    let args = Args::parse();
+    let program = parse(pixels(args.file, args.pixel_size as u32).unwrap());
     let mut vm = VM::new();
     vm.execute(program);
 }
