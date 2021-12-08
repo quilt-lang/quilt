@@ -12,7 +12,7 @@ pub struct VM {
     pc: MatrixPoint,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Direction {
     North,
     East,
@@ -66,38 +66,53 @@ impl VM {
         }
     }
 
-    // prioritize roads over all other instructions
-    pub fn get_next_instruction() -> MatrixPoint {
-        // TODO get_next_pixel() until we find a road
-        // if there is no road, use the first result of get_next_pixel()
-        MatrixPoint(0, 0)
+    // prioritize roads over all other instructions besides the one in front of us
+    pub fn get_next_instruction(&self) -> Pixel {
+        let next_pixels = self.get_next_pixels();
+        let (first_dir, first_pixel) = next_pixels[0];
+        let first_road = next_pixels
+            .iter()
+            .filter(|(_dir, pixel)| matches!(pixel.as_instruction(), Instruction::Road))
+            .next();
+        if let Some((dir, road)) = first_road {
+            if *dir != self.direction.opposite() {
+                return *road;
+            } else if first_dir == self.direction {
+                return first_pixel;
+            }
+        }
+        first_pixel
     }
 
     // try the pixel ahead of us. If that doesn't exist,
     // try the pixel to the 'right' (counter-clockwise & opposite). If that doesn't exist,
     // try the pixel to the 'left' (counter-clockwise). If that doesn't exist,
     // go back the way we came
-    fn get_next_pixel(&self) -> (Direction, MatrixPoint) {
+    fn get_next_pixels(&self) -> Vec<(Direction, Pixel)> {
         let ins = &self.instructions;
         let dir = self.direction;
-
-        if let Some(point) = ins.go(&self.pc, dir) {
+        let mut next_pixels = vec![];
+        if let Some(point) = ins.go(self.pc, dir) {
             // forward
-            (dir, point)
-        } else if let Some(point) = ins.go(&self.pc, dir.counter_clockwise().opposite()) {
-            // right
-            (dir.counter_clockwise().opposite(), point)
-        } else if let Some(point) = ins.go(&self.pc, dir.counter_clockwise()) {
-            // left
-            (dir.counter_clockwise(), point)
-        } else if let Some(point) = ins.go(&self.pc, dir.opposite()) {
-            // back
-            (dir.opposite(), point)
-        } else {
-            // reaching this means the way we came doesn't exist
-            // which should be impossible
-            unreachable!()
+            next_pixels.push((dir, point));
         }
+        if let Some(point) = ins.go(self.pc, dir.counter_clockwise().opposite()) {
+            // right
+            next_pixels.push((dir.counter_clockwise().opposite(), point));
+        }
+        if let Some(point) = ins.go(self.pc, dir.counter_clockwise()) {
+            // left
+            next_pixels.push((dir.counter_clockwise(), point));
+        }
+        if let Some(point) = ins.go(self.pc, dir.opposite()) {
+            // back
+            next_pixels.push((dir.opposite(), point));
+        }
+        next_pixels
+    }
+
+    fn get_next_pixel(&self) -> (Direction, Pixel) {
+        self.get_next_pixels()[0]
     }
 
     fn find_start(&self) -> MatrixPoint {

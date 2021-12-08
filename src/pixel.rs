@@ -1,7 +1,7 @@
 use crate::hsl::Hsl;
 use crate::Instruction;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Pixel {
     pub value: u16,
 }

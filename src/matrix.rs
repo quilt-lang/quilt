@@ -1,6 +1,6 @@
 use crate::vm::Direction;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct MatrixPoint(pub usize, pub usize);
 
 #[derive(Debug)]
@@ -8,20 +8,20 @@ pub struct Matrix<T> {
     pub matrix: Vec<Vec<T>>,
 }
 
-impl<T> Matrix<T> {
+impl<T: Copy> Matrix<T> {
     pub fn new(matrix: Vec<Vec<T>>) -> Matrix<T> {
         Matrix { matrix }
     }
 
-    pub fn cell_exists(&self, point: &MatrixPoint) -> bool {
+    pub fn cell_exists(&self, point: MatrixPoint) -> bool {
         let MatrixPoint(x, y) = point;
 
-        if *y >= self.matrix.len() {
+        if y >= self.matrix.len() {
             return false;
         }
 
         if let Some(row) = self.matrix.get(0) {
-            if *x >= row.len() {
+            if x >= row.len() {
                 false
             } else {
                 true
@@ -31,43 +31,37 @@ impl<T> Matrix<T> {
         }
     }
 
+    pub fn get(&self, point: MatrixPoint) -> Option<T> {
+        if self.cell_exists(point) {
+            Some(self.matrix[point.1][point.0])
+        } else {
+            None
+        }
+    }
+
     /// Tries to move a point in the provided direction
     /// If there is no cell in that direction, None is returned
     /// Otherwise Some(NewMatrixPoint) is returned
-    pub fn go(&self, point: &MatrixPoint, direction: Direction) -> Option<MatrixPoint> {
+    pub fn go(&self, point: MatrixPoint, direction: Direction) -> Option<T> {
         let MatrixPoint(x, y) = point;
 
         match direction {
             Direction::North => {
-                if *y == 0 {
+                if y == 0 {
                     None
                 } else {
-                    Some(MatrixPoint(*x, *y - 1))
+                    self.get(MatrixPoint(x, y - 1))
                 }
             }
             Direction::West => {
-                if *x == 0 {
+                if x == 0 {
                     None
                 } else {
-                    Some(MatrixPoint(*x - 1, *y))
+                    self.get(MatrixPoint(x - 1, y))
                 }
             }
-            Direction::South => {
-                let point = MatrixPoint(*x, *y + 1);
-                if !self.cell_exists(&point) {
-                    None
-                } else {
-                    Some(point)
-                }
-            }
-            Direction::East => {
-                let point = MatrixPoint(*x + 1, *y);
-                if !self.cell_exists(&point) {
-                    None
-                } else {
-                    Some(point)
-                }
-            }
+            Direction::South => self.get(MatrixPoint(x, y + 1)),
+            Direction::East => self.get(MatrixPoint(x + 1, y)),
         }
     }
 }
