@@ -75,8 +75,7 @@ mod test {
         let r2 = vec![4, 5, 6];
         let r3 = vec![7, 8, 9];
         let v = vec![r1, r2, r3];
-        let m = super::Matrix::new(v);
-        return m;
+        super::Matrix::new(v)
     }
 
     #[test]
