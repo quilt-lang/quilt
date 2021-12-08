@@ -62,8 +62,8 @@ impl VM {
         self.instructions = instructions;
         self.pc = self.find_start();
 
-        loop { // TODO change condition
-        }
+        //loop { // TODO change condition
+        //}
     }
 
     // prioritize roads over all other instructions besides the one in front of us
@@ -120,12 +120,70 @@ impl VM {
         for (row_idx, row) in self.instructions.matrix.iter().enumerate() {
             for (col_idx, pixel) in row.iter().enumerate() {
                 if pixel.as_instruction() == Instruction::Start {
-                    return MatrixPoint(row_idx, col_idx);
+                    return MatrixPoint(col_idx, row_idx);
                 }
             }
         }
 
         // default start coordinates
         MatrixPoint(0, 0)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::VM;
+    use crate::{Matrix, MatrixPoint, Pixel};
+
+    fn init_vm(matrix: Vec<Vec<u16>>) -> VM {
+        let mut vm = VM::new();
+        vm.instructions = init_matrix(matrix);
+        vm
+    }
+
+    fn init_matrix(pixels: Vec<Vec<u16>>) -> Matrix<Pixel> {
+        Matrix::new(
+            pixels
+                .iter()
+                .map(|row| row.iter().map(|p| Pixel::new(*p)).collect())
+                .collect(),
+        )
+    }
+
+    #[test]
+    fn test_start_one_d() {
+        let mut vm = init_vm(vec![vec![
+            300, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306,
+        ]]);
+
+        let start = vm.find_start();
+
+        assert_eq!(start, MatrixPoint(0, 0));
+    }
+
+    #[test]
+    fn test_start_two_d() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+            vec![0, 180, 180, 36, 1, 300, 2, 108, 36, 48, 108, 306],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        let start = vm.find_start();
+
+        assert_eq!(start, MatrixPoint(5, 1));
+    }
+
+    #[test]
+    fn test_start_bounds() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+            vec![0, 180, 180, 36, 1, 3, 2, 108, 36, 48, 108, 306],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 300],
+        ]);
+
+        let start = vm.find_start();
+
+        assert_eq!(start, MatrixPoint(11, 2));
     }
 }

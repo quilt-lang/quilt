@@ -7,5 +7,7 @@ pub enum Instruction {
     Save,     // saves u16 into tape[registerA]
     Add,      // pops the stack twice, adds the numbers & pushes the result
     Start,    // where the program starts
-    Output,
+    Output,   // outputs & pops the top of the stack to stdout
+
+    None,
 }

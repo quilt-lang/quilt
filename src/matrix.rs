@@ -1,6 +1,6 @@
 use crate::vm::Direction;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct MatrixPoint(pub usize, pub usize);
 
 #[derive(Debug)]

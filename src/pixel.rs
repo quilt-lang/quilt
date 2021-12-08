@@ -20,7 +20,7 @@ impl Pixel {
             180..=188 => Instruction::Road,
             300 => Instruction::Start,
             306..=314 => Instruction::Output,
-            _ => todo!("{}", self.value),
+            _ => Instruction::None,
         }
     }
 
