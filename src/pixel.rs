@@ -1,6 +1,8 @@
 use crate::hsl::Hsl;
 use crate::Instruction;
 
+pub const START: u16 = 300;
+
 #[derive(Clone, Copy, Debug)]
 pub struct Pixel {
     pub value: u16,
@@ -18,7 +20,7 @@ impl Pixel {
             36..=44 => Instruction::Push,
             108..=116 => Instruction::Add,
             180..=188 => Instruction::Road,
-            300 => Instruction::Start,
+            START => Instruction::Start,
             306..=314 => Instruction::Output,
             _ => Instruction::None,
         }

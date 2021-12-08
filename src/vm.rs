@@ -132,7 +132,9 @@ impl VM {
 
 #[cfg(test)]
 mod test {
-    use super::VM;
+    use super::{Direction, VM};
+    use crate::pixel::START;
+    use crate::vm::Direction::{East, North, South, West};
     use crate::{Matrix, MatrixPoint, Pixel};
 
     fn init_vm(matrix: Vec<Vec<u16>>) -> VM {
@@ -152,8 +154,8 @@ mod test {
 
     #[test]
     fn test_start_one_d() {
-        let mut vm = init_vm(vec![vec![
-            300, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306,
+        let vm = init_vm(vec![vec![
+            START, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306,
         ]]);
 
         let start = vm.find_start();
@@ -163,9 +165,9 @@ mod test {
 
     #[test]
     fn test_start_two_d() {
-        let mut vm = init_vm(vec![
+        let vm = init_vm(vec![
             vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
-            vec![0, 180, 180, 36, 1, 300, 2, 108, 36, 48, 108, 306],
+            vec![0, 180, 180, 36, 1, START, 2, 108, 36, 48, 108, 306],
             vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
         ]);
 
@@ -176,14 +178,184 @@ mod test {
 
     #[test]
     fn test_start_bounds() {
-        let mut vm = init_vm(vec![
+        let vm = init_vm(vec![
             vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
             vec![0, 180, 180, 36, 1, 3, 2, 108, 36, 48, 108, 306],
-            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 300],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, START],
         ]);
 
         let start = vm.find_start();
 
         assert_eq!(start, MatrixPoint(11, 2));
+    }
+
+    fn compare_pixels(actual: Vec<(Direction, Pixel)>, expected: Vec<(Direction, u16)>) {
+        assert_eq!(actual.len(), expected.len());
+
+        for (idx, (dir, pixel)) in actual.iter().enumerate() {
+            let (expected_dir, expected_pixel) = expected[idx];
+            assert_eq!(*dir, expected_dir);
+            assert_eq!(pixel.value, expected_pixel);
+        }
+    }
+
+    #[test]
+    fn test_get_next_pixels_east() {
+        let mut vm = init_vm(vec![vec![
+            START, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306,
+        ]]);
+
+        vm.pc = vm.find_start();
+        let actual = vm.get_next_pixels();
+        let expected = vec![(East, 180)];
+        compare_pixels(actual, expected);
+    }
+
+    #[test]
+    fn test_get_next_pixels_east_middle() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, 180, 36, 1, 37, 2, 108, 36, 48, 108, 306],
+            vec![0, 180, 180, 36, 1, START, 2, 108, 36, 48, 108, 306],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.pc = vm.find_start();
+        assert_eq!(vm.pc, MatrixPoint(5, 1));
+        let pixels = vm.get_next_pixels();
+
+        let expected = vec![(East, 2), (South, 36), (North, 37), (West, 1)];
+
+        compare_pixels(pixels, expected);
+    }
+
+    #[test]
+    fn test_get_next_pixels_east_bound() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, 180, 36, 1, 37, 2, 108, 36, 48, 108, 310],
+            vec![0, 180, 180, 36, 1, 108, 2, 108, 36, 48, 108, START],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.pc = vm.find_start();
+        assert_eq!(vm.pc, MatrixPoint(11, 1));
+        let actual = vm.get_next_pixels();
+
+        let expected = vec![(South, 306), (North, 310), (West, 108)];
+
+        compare_pixels(actual, expected);
+    }
+
+    #[test]
+    fn test_get_next_pixels_north() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, 180, 36, 1, 37, 2, 108, 36, 48, 108, 310],
+            vec![0, 180, 180, 36, 1, 108, 2, 108, 36, START, 108, 314],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = North;
+
+        vm.pc = vm.find_start();
+        assert_eq!(vm.pc, MatrixPoint(9, 1));
+        let actual = vm.get_next_pixels();
+
+        let expected = vec![(North, 48), (East, 108), (West, 36), (South, 48)];
+
+        compare_pixels(actual, expected);
+    }
+
+    #[test]
+    fn test_get_next_pixels_north_bound() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, 180, 36, 1, 37, 2, 108, START, 48, 108, 310],
+            vec![0, 180, 180, 36, 1, 18, 2, 108, 36, 42, 108, 314],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = North;
+
+        vm.pc = vm.find_start();
+        assert_eq!(vm.pc, MatrixPoint(8, 0));
+        let actual = vm.get_next_pixels();
+
+        let expected = vec![(East, 48), (West, 108), (South, 36)];
+
+        compare_pixels(actual, expected);
+    }
+
+    #[test]
+    fn test_get_next_pixels_west() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, 180, 36, 1, 37, 2, 108, 70, 48, 108, 310],
+            vec![0, 180, START, 36, 1, 18, 2, 108, 36, 42, 108, 314],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = West;
+
+        vm.pc = vm.find_start();
+        assert_eq!(vm.pc, MatrixPoint(2, 1));
+        let actual = vm.get_next_pixels();
+
+        let expected = vec![(West, 180), (North, 180), (South, 180), (East, 36)];
+
+        compare_pixels(actual, expected);
+    }
+
+    #[test]
+    fn test_get_next_pixels_south_bound() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, 180, 36, 1, 37, 2, 108, 70, 48, 108, 310],
+            vec![0, 180, 180, 36, 1, 18, 2, 108, 36, 42, 108, 314],
+            vec![START, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = South;
+
+        vm.pc = vm.find_start();
+        assert_eq!(vm.pc, MatrixPoint(0, 2));
+        let actual = vm.get_next_pixels();
+
+        let expected = vec![(East, 180), (North, 0)];
+
+        compare_pixels(actual, expected);
+    }
+
+    #[test]
+    fn test_get_next_pixels_south() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, START, 36, 1, 37, 2, 108, 70, 48, 108, 310],
+            vec![0, 180, 100, 36, 1, 18, 2, 108, 36, 42, 108, 314],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = South;
+
+        vm.pc = vm.find_start();
+        assert_eq!(vm.pc, MatrixPoint(2, 0));
+        let actual = vm.get_next_pixels();
+
+        let expected = vec![(South, 100), (West, 180), (East, 36)];
+
+        compare_pixels(actual, expected);
+    }
+
+    #[test]
+    fn test_get_next_pixels_west_bound() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, 180, 36, 1, 37, 2, 108, 70, 48, 108, 310],
+            vec![START, 180, 180, 36, 1, 18, 2, 108, 36, 42, 108, 314],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = West;
+
+        vm.pc = vm.find_start();
+        assert_eq!(vm.pc, MatrixPoint(0, 1));
+        let actual = vm.get_next_pixels();
+
+        let expected = vec![(North, 0), (South, 0), (East, 180)];
+
+        compare_pixels(actual, expected);
     }
 }
