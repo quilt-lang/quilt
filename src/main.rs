@@ -13,7 +13,8 @@ pub use vm::VM;
 use parser::{parse, pixels};
 
 fn main() {
-    let program = parse(pixels("examples/hello_world.png").unwrap());
+    parse(pixels("examples/hello_world_x20.png", 20).unwrap());
+    let program = parse(pixels("examples/hello_world.png", 1).unwrap());
     let mut vm = VM::new();
     vm.execute(program);
 }
