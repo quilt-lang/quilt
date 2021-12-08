@@ -32,8 +32,7 @@ fn main_old() {
     vm.execute(program);
 }
 
-#[allow(unused)]
 fn main() {
-    main_old();
-    //parse(pixels("examples/hello_world.png").unwrap());
+    parse(pixels("examples/hello_world.png", 1).unwrap());
+    parse(pixels("examples/hello_world_x20.png", 20).unwrap());
 }
