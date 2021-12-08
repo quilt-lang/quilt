@@ -12,28 +12,8 @@ pub use vm::VM;
 
 use parser::{parse, pixels};
 
-fn main_old() {
-    let program = Matrix::new(vec![vec![
-        Pixel::new(300),
-        Pixel::new(180),
-        Pixel::new(180),
-        Pixel::new(36),
-        Pixel::new(1),
-        Pixel::new(36),
-        Pixel::new(2),
-        Pixel::new(108),
-        Pixel::new(36),
-        Pixel::new(48),
-        Pixel::new(108),
-        Pixel::new(306),
-    ]]);
-
+fn main() {
+    let program = parse(pixels("examples/hello_world.png").unwrap());
     let mut vm = VM::new();
     vm.execute(program);
-}
-
-#[allow(unused)]
-fn main() {
-    main_old();
-    //parse(pixels("examples/hello_world.png").unwrap());
 }

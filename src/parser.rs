@@ -1,6 +1,5 @@
 use crate::hsl::Hsl;
-use crate::Matrix;
-use crate::Pixel;
+use crate::{Matrix, MatrixPoint, Pixel};
 use anyhow::Result;
 use image::io::Reader as ImageReader;
 use image::GenericImageView;
@@ -18,13 +17,14 @@ pub fn parse(pixels: Vec<(u32, u32, Hsl)>) -> Matrix<Pixel> {
     let mut rows = vec![];
     let mut row: Vec<Pixel> = vec![];
     let mut prev_y = 0;
-    for (_, y, p) in pixels {
+    for (x, y, p) in pixels {
         if y != prev_y {
             rows.push(row);
             prev_y = y;
             row = vec![];
         }
-        row.push(p.into());
+        let hsl: Hsl = p.into();
+        row.push(Pixel::new(hsl.h, MatrixPoint(x as usize, y as usize)));
     }
     rows.push(row);
     Matrix::new(rows)

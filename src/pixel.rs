@@ -1,16 +1,17 @@
 use crate::hsl::Hsl;
-use crate::Instruction;
+use crate::{Instruction, MatrixPoint};
 
 pub const START: u16 = 300;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Pixel {
     pub value: u16,
+    pub point: MatrixPoint,
 }
 
 impl Pixel {
-    pub fn new(value: u16) -> Pixel {
-        Pixel { value }
+    pub fn new(value: u16, point: MatrixPoint) -> Pixel {
+        Pixel { value, point, }
     }
 
     pub fn as_instruction(&self) -> Instruction {
@@ -22,17 +23,12 @@ impl Pixel {
             180..=188 => Instruction::Road,
             START => Instruction::Start,
             306..=314 => Instruction::Output,
+            324..=332 => Instruction::OutputUntil,
             _ => Instruction::None,
         }
     }
 
     pub fn as_data(&self) -> u16 {
         self.value
-    }
-}
-
-impl From<Hsl> for Pixel {
-    fn from(hsl: Hsl) -> Self {
-        Self::new(hsl.h)
     }
 }

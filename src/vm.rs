@@ -1,3 +1,5 @@
+use anyhow::{anyhow, Result};
+
 use crate::{Instruction, Pixel};
 use crate::{Matrix, MatrixPoint};
 
@@ -62,12 +64,66 @@ impl VM {
         self.instructions = instructions;
         self.pc = self.find_start();
 
-        //loop { // TODO change condition
-        //}
+        let mut last_instruction = Instruction::None;
+        loop {
+            let pixel = self.get_next_instruction();
+            self.pc = pixel.point;
+
+            let instruction = pixel.as_instruction();
+            let mut arg = None;
+
+            // does the instruction take an arg?
+            if instruction.takes_arg() {
+                arg = Some(self.get_next_instruction());
+                self.pc = arg.unwrap().point;
+            }
+
+            // execute the instruction
+            if let Err(e) = self.execute_instruction(instruction, arg) {
+                eprintln!("{}", e);
+                break;
+            }
+        }
+    }
+
+    fn execute_instruction(&mut self, instruction: Instruction, arg: Option<Pixel>) -> Result<()> {
+        match instruction {
+            Instruction::Road => Ok(()),
+            Instruction::Push => match arg {
+                Some(arg) => Ok(self.push(arg)),
+                None      => Err(anyhow!("no arg supplied"))
+            }
+            Instruction::Add => self.add(),
+            Instruction::OutputUntil => self.output_until(),
+            _ => todo!()
+        }
+    }
+
+    fn push(&mut self, arg: Pixel) {
+        self.stack.push(arg.value)
+    }
+
+    fn add(&mut self) -> Result<()> {
+        // TODO this is ugly
+        let a = self.stack.pop().ok_or(anyhow!("stack is empty"))?;
+        let b = self.stack.pop().ok_or(anyhow!("stack is empty"))?;
+
+        self.stack.push(a + b);
+        Ok(())
+    }
+
+    fn output_until(&mut self) -> Result<()> {
+        let mut c = self.stack.pop().ok_or(anyhow!("stack is empty"))?;
+
+        while c != 0 {
+            println!("{}", c as u8 as char);
+            c = self.stack.pop().ok_or(anyhow!("stack is empty"))?;
+        }
+        Ok(())
     }
 
     // prioritize roads over all other instructions besides the one in front of us
-    pub fn get_next_instruction(&self) -> (Direction, Pixel) {
+    pub fn get_next_instruction(&mut self) -> Pixel {
         let next_pixels = self.get_next_pixels();
         let (first_dir, first_pixel) = next_pixels[0];
         let first_road = next_pixels
@@ -79,18 +135,20 @@ impl VM {
         // only take the opposite road if there are no other options
         if let Some((dir, road)) = first_road {
             if *dir != self.direction.opposite() {
-                return (*dir, *road);
+                self.direction = *dir;
+                return *road
             }
         }
 
         // if there are no roads that don't lead backwards & there is an
         // instruction in front, take it
         if first_dir == self.direction {
-            (first_dir, first_pixel)
+            first_pixel
         } else if let Some((opp_dir, pixel)) = next_pixels.last() {
             // otherwise - if there are no roads to the left or right & nothing in front -
             // we go backwards (no matter if it's a road or not)
-            (*opp_dir, *pixel)
+            self.direction = *opp_dir;
+            *pixel
         } else {
             // it should be impossible for there to be nothing in front of or behind
             unreachable!()
@@ -103,24 +161,21 @@ impl VM {
     // go back the way we came
     fn get_next_pixels(&self) -> Vec<(Direction, Pixel)> {
         let ins = &self.instructions;
-        let dir = self.direction;
         let mut next_pixels = vec![];
-        if let Some(point) = ins.go(self.pc, dir) {
-            // forward
-            next_pixels.push((dir, point));
+
+        let directions = [
+            self.direction,                                // forward
+            self.direction.counter_clockwise().opposite(), // right
+            self.direction.counter_clockwise(),            // left
+            self.direction.opposite(),                     // back
+        ];
+
+        for dir in directions {
+            if let Some(point) = ins.go(self.pc, dir) {
+                next_pixels.push((dir, point));
+            }
         }
-        if let Some(point) = ins.go(self.pc, dir.counter_clockwise().opposite()) {
-            // right
-            next_pixels.push((dir.counter_clockwise().opposite(), point));
-        }
-        if let Some(point) = ins.go(self.pc, dir.counter_clockwise()) {
-            // left
-            next_pixels.push((dir.counter_clockwise(), point));
-        }
-        if let Some(point) = ins.go(self.pc, dir.opposite()) {
-            // back
-            next_pixels.push((dir.opposite(), point));
-        }
+
         next_pixels
     }
 
@@ -157,12 +212,17 @@ mod test {
     }
 
     fn init_matrix(pixels: Vec<Vec<u16>>) -> Matrix<Pixel> {
-        Matrix::new(
-            pixels
-                .iter()
-                .map(|row| row.iter().map(|p| Pixel::new(*p)).collect())
-                .collect(),
-        )
+        let mut v = vec![];
+
+        for (row_idx, row) in pixels.iter().enumerate() {
+            let mut row_vec = vec![];
+            for (col_idx, pixel) in row.iter().enumerate() {
+                row_vec.push(Pixel::new(*pixel, MatrixPoint(col_idx, row_idx)));
+            }
+            v.push(row_vec);
+        }
+
+        Matrix::new(v)
     }
 
     #[test]
@@ -368,9 +428,8 @@ mod test {
         vm.direction = East;
 
         assert_eq!(vm.pc, MatrixPoint(0, 1));
-        let (dir, pixel) = vm.get_next_instruction();
+        let pixel = vm.get_next_instruction();
 
-        assert_eq!(dir, East);
         assert_eq!(pixel.value, 180);
     }
 
@@ -384,9 +443,8 @@ mod test {
 
         vm.direction = East;
 
-        let (dir, pixel) = vm.get_next_instruction();
+        let pixel = vm.get_next_instruction();
 
-        assert_eq!(dir, East);
         assert_eq!(pixel.value, 1);
     }
 
@@ -400,10 +458,9 @@ mod test {
 
         vm.direction = East;
 
-        let (dir, pixel) = vm.get_next_instruction();
+        let pixel = vm.get_next_instruction();
 
         // take the road to the 'right' (south)
-        assert_eq!(dir, South);
         assert_eq!(pixel.value, 180);
     }
 
@@ -417,10 +474,9 @@ mod test {
 
         vm.direction = East;
 
-        let (dir, pixel) = vm.get_next_instruction();
+        let pixel = vm.get_next_instruction();
 
         // turn around
-        assert_eq!(dir, West);
         assert_eq!(pixel.value, 180);
     }
 
@@ -434,10 +490,9 @@ mod test {
 
         vm.direction = North;
 
-        let (dir, pixel) = vm.get_next_instruction();
+        let pixel = vm.get_next_instruction();
 
         // go 'left'
-        assert_eq!(dir, West);
         assert_eq!(pixel.value, 180);
     }
 
@@ -451,9 +506,8 @@ mod test {
 
         vm.direction = North;
 
-        let (dir, pixel) = vm.get_next_instruction();
+        let pixel = vm.get_next_instruction();
 
-        assert_eq!(dir, North);
         assert_eq!(pixel.value, 37);
     }
 
@@ -467,10 +521,25 @@ mod test {
 
         vm.direction = East;
 
-        let (dir, pixel) = vm.get_next_instruction();
+        let pixel = vm.get_next_instruction();
 
         // don't turn around if there's another road available
-        assert_eq!(dir, North);
+        assert_eq!(pixel.value, 180);
+    }
+
+    #[test]
+    fn test_get_next_instruction7() {
+        let mut vm = init_vm(vec![
+            vec![180, 180, 180, 36, 1, 37, 2, 108, 70, 48, 108, 180],
+            vec![180, 180, 180, 36, 1, 18, 2, 108, 36, 42, 180, 180],
+            vec![180, 1, START, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = North;
+
+        let pixel = vm.get_next_instruction();
+
+        // go north
         assert_eq!(pixel.value, 180);
     }
 }
