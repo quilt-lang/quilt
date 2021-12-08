@@ -81,7 +81,8 @@ impl VM {
                 return first_pixel;
             }
         }
-        first_pixel
+        // We bounce
+        next_pixels.last().unwrap().1
     }
 
     // try the pixel ahead of us. If that doesn't exist,
