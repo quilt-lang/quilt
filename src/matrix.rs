@@ -65,3 +65,37 @@ impl<T: Copy> Matrix<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::vm::Direction;
+
+    fn create_test_matrix() -> super::Matrix<usize> {
+        let r1 = vec![1, 2, 3];
+        let r2 = vec![4, 5, 6];
+        let r3 = vec![7, 8, 9];
+        let v = vec![r1, r2, r3];
+        let m = super::Matrix::new(v);
+        return m;
+    }
+
+    #[test]
+    fn test_go_boundaries() {
+        let m = create_test_matrix();
+        assert_eq!(m.go(super::MatrixPoint(0, 0), Direction::North), None);
+        assert_eq!(m.go(super::MatrixPoint(0, 0), Direction::West), None);
+        assert_eq!(m.go(super::MatrixPoint(2, 2), Direction::East), None);
+        assert_eq!(m.go(super::MatrixPoint(2, 2), Direction::South), None);
+    }
+
+    #[test]
+    fn test_go_happy() {
+        let m = create_test_matrix();
+        let p = super::MatrixPoint(1, 1);
+
+        assert_eq!(m.go(p, Direction::North).unwrap(), 2);
+        assert_eq!(m.go(p, Direction::West).unwrap(), 4);
+        assert_eq!(m.go(p, Direction::East).unwrap(), 6);
+        assert_eq!(m.go(p, Direction::South).unwrap(), 8);
+    }
+}
