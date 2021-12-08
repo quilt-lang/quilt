@@ -5,7 +5,7 @@ const TAPE_SIZE: usize = 360;
 
 pub struct VM {
     stack: Vec<u16>,
-    registerA: u16,
+    register_a: u16,
     tape: [u16; TAPE_SIZE],
     direction: Direction,
     instructions: Matrix<Pixel>,
@@ -43,7 +43,7 @@ impl Default for VM {
     fn default() -> VM {
         VM {
             stack: vec![],
-            registerA: 0,
+            register_a: 0,
             tape: [0; TAPE_SIZE],
             direction: Direction::East,
             instructions: Matrix::new(vec![]),
@@ -103,10 +103,10 @@ impl VM {
     }
 
     fn find_start(&self) -> MatrixPoint {
-        for (rowIdx, row) in self.instructions.matrix.iter().enumerate() {
-            for (colIdx, pixel) in row.iter().enumerate() {
+        for (row_idx, row) in self.instructions.matrix.iter().enumerate() {
+            for (col_idx, pixel) in row.iter().enumerate() {
                 if pixel.as_instruction() == Instruction::Start {
-                    return MatrixPoint(rowIdx, colIdx);
+                    return MatrixPoint(row_idx, col_idx);
                 }
             }
         }

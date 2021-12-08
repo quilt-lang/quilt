@@ -34,5 +34,6 @@ fn main_old() {
 
 #[allow(unused)]
 fn main() {
-    parse(pixels("examples/hello_world.png").unwrap());
+    main_old();
+    //parse(pixels("examples/hello_world.png").unwrap());
 }

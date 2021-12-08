@@ -11,15 +11,14 @@ impl<T> Matrix<T> {
     }
 
     pub fn cell_exists(&self, point: &MatrixPoint) -> bool {
-        let x = point.0;
-        let y = point.1;
+        let MatrixPoint(x, y) = point;
 
-        if y < 0 || y >= self.matrix.len() {
+        if *y >= self.matrix.len() {
             return false;
         }
 
         if let Some(row) = self.matrix.get(0) {
-            if x < 0 || x >= row.len() {
+            if *x >= row.len() {
                 false
             } else {
                 true

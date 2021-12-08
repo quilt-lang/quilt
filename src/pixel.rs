@@ -1,6 +1,5 @@
 use crate::hsl::Hsl;
 use crate::Instruction;
-use image::Rgba;
 
 #[derive(Debug)]
 pub struct Pixel {
