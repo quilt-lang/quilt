@@ -1,7 +1,10 @@
+mod hsl;
 mod matrix;
+mod parser;
 mod vm;
 
 use crate::matrix::Matrix;
+use crate::parser::parse;
 use crate::vm::{Pixel, VM};
 
 fn main() {
@@ -22,4 +25,9 @@ fn main() {
 
     let mut vm = VM::new();
     vm.execute(program);
+}
+
+#[allow(unused)]
+fn main_old() {
+    parse().unwrap();
 }
