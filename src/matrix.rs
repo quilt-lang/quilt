@@ -1,3 +1,6 @@
+use crate::vm::Direction;
+
+#[derive(Debug)]
 pub struct MatrixPoint(pub usize, pub usize);
 
 #[derive(Debug)]
@@ -25,6 +28,46 @@ impl<T> Matrix<T> {
             }
         } else {
             false
+        }
+    }
+
+    /// Tries to move a point in the provided direction
+    /// If there is no cell in that direction, None is returned
+    /// Otherwise Some(NewMatrixPoint) is returned
+    pub fn go(&self, point: &MatrixPoint, direction: Direction) -> Option<MatrixPoint> {
+        let MatrixPoint(x, y) = point;
+
+        match direction {
+            Direction::North => {
+                if *y == 0 {
+                    None
+                } else {
+                    Some(MatrixPoint(*x, *y - 1))
+                }
+            }
+            Direction::West => {
+                if *x == 0 {
+                    None
+                } else {
+                    Some(MatrixPoint(*x - 1, *y))
+                }
+            }
+            Direction::South => {
+                let point = MatrixPoint(*x, *y + 1);
+                if !self.cell_exists(&point) {
+                    None
+                } else {
+                    Some(point)
+                }
+            }
+            Direction::East => {
+                let point = MatrixPoint(*x + 1, *y);
+                if !self.cell_exists(&point) {
+                    None
+                } else {
+                    Some(point)
+                }
+            }
         }
     }
 }

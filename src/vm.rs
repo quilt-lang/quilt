@@ -9,9 +9,10 @@ pub struct VM {
     tape: [u16; TAPE_SIZE],
     direction: Direction,
     instructions: Matrix<Pixel>,
-    program_counter: MatrixPoint,
+    pc: MatrixPoint,
 }
 
+#[derive(Clone, Copy, Debug)]
 pub enum Direction {
     North,
     East,
@@ -47,7 +48,7 @@ impl Default for VM {
             tape: [0; TAPE_SIZE],
             direction: Direction::East,
             instructions: Matrix::new(vec![]),
-            program_counter: MatrixPoint(0, 0),
+            pc: MatrixPoint(0, 0),
         }
     }
 }
@@ -59,7 +60,7 @@ impl VM {
 
     pub fn execute(&mut self, instructions: Matrix<Pixel>) {
         self.instructions = instructions;
-        self.program_counter = self.find_start();
+        self.pc = self.find_start();
 
         loop { // TODO change condition
         }
@@ -67,39 +68,36 @@ impl VM {
 
     // prioritize roads over all other instructions
     pub fn get_next_instruction() -> MatrixPoint {
+        // TODO get_next_pixel() until we find a road
+        // if there is no road, use the first result of get_next_pixel()
         MatrixPoint(0, 0)
     }
 
-    // check pixel in same-direction for a road
-    // then search counter-clockwise for a road, starting from
-    // current direction
+    // try the pixel ahead of us. If that doesn't exist,
+    // try the pixel to the 'right' (counter-clockwise & opposite). If that doesn't exist,
+    // try the pixel to the 'left' (counter-clockwise). If that doesn't exist,
+    // go back the way we came
     fn get_next_pixel(&self) -> (Direction, MatrixPoint) {
-        let MatrixPoint(x, y) = self.program_counter;
+        let ins = &self.instructions;
+        let dir = self.direction;
 
-        match self.direction {
-            Direction::North => {
-                /*
-                let point = if y == 0 { // make sure we don't underflow
-                    MatrixPoint(x, 1)
-                } else {
-                    MatrixPoint(x, y + 1)
-                }
-
-                if self.instructions.cell_exists(point) {
-                    (self.direction, point)
-                } else {
-                    (self.direction.opposite(), )
-                }
-                */
-                Direction::West
-            }
-
-            Direction::West => Direction::South,
-            Direction::South => Direction::East,
-            Direction::East => Direction::North,
-        };
-
-        (Direction::North, MatrixPoint(0, 0))
+        if let Some(point) = ins.go(&self.pc, dir) {
+            // forward
+            (dir, point)
+        } else if let Some(point) = ins.go(&self.pc, dir.counter_clockwise().opposite()) {
+            // right
+            (dir.counter_clockwise().opposite(), point)
+        } else if let Some(point) = ins.go(&self.pc, dir.counter_clockwise()) {
+            // left
+            (dir.counter_clockwise(), point)
+        } else if let Some(point) = ins.go(&self.pc, dir.opposite()) {
+            // back
+            (dir.opposite(), point)
+        } else {
+            // reaching this means the way we came doesn't exist
+            // which should be impossible
+            unreachable!()
+        }
     }
 
     fn find_start(&self) -> MatrixPoint {
