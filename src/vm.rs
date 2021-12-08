@@ -91,11 +91,11 @@ impl VM {
             Instruction::Road => Ok(()),
             Instruction::Push => match arg {
                 Some(arg) => Ok(self.push(arg)),
-                None      => Err(anyhow!("no arg supplied"))
-            }
+                None => Err(anyhow!("no arg supplied")),
+            },
             Instruction::Add => self.add(),
             Instruction::OutputUntil => self.output_until(),
-            _ => todo!()
+            _ => todo!(),
         }
     }
 
@@ -136,7 +136,7 @@ impl VM {
         if let Some((dir, road)) = first_road {
             if *dir != self.direction.opposite() {
                 self.direction = *dir;
-                return *road
+                return *road;
             }
         }
 

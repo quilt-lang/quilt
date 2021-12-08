@@ -11,7 +11,7 @@ pub struct Pixel {
 
 impl Pixel {
     pub fn new(value: u16, point: MatrixPoint) -> Pixel {
-        Pixel { value, point, }
+        Pixel { value, point }
     }
 
     pub fn as_instruction(&self) -> Instruction {
