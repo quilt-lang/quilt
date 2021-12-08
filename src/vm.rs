@@ -1,4 +1,5 @@
-use crate::matrix::{Matrix, MatrixPoint};
+use crate::{Instruction, Pixel};
+use crate::{Matrix, MatrixPoint};
 
 const TAPE_SIZE: usize = 360;
 
@@ -22,60 +23,20 @@ impl Direction {
     pub fn opposite(&self) -> Direction {
         match self {
             Direction::North => Direction::South,
-            Direction::West  => Direction::East,
+            Direction::West => Direction::East,
             Direction::South => Direction::North,
-            Direction::East  => Direction::West,
+            Direction::East => Direction::West,
         }
     }
 
     pub fn counter_clockwise(&self) -> Direction {
         match self {
             Direction::North => Direction::West,
-            Direction::West  => Direction::South,
+            Direction::West => Direction::South,
             Direction::South => Direction::East,
-            Direction::East  => Direction::North,
+            Direction::East => Direction::North,
         }
     }
-}
-
-#[derive(Debug)]
-pub struct Pixel {
-    value: u16,
-}
-
-impl Pixel {
-    pub fn new(value: u16) -> Pixel {
-        Pixel { value }
-    }
-
-    pub fn as_instruction(&self) -> Instruction {
-        match self.value {
-            0..=8 => Instruction::PushA,
-            18..=26 => Instruction::PopUntil,
-            36..=44 => Instruction::Push,
-            108..=116 => Instruction::Add,
-            180..=188 => Instruction::Road,
-            300 => Instruction::Start,
-            306..=314 => Instruction::Output,
-            _ => todo!("{}", self.value),
-        }
-    }
-
-    pub fn as_data(&self) -> u16 {
-        self.value
-    }
-}
-
-#[derive(PartialEq)]
-pub enum Instruction {
-    PushA,    // pushes an address into registerA
-    PopUntil, // pops until hitting 0
-    Road,     // where the program goes
-    Push,     // pushes a u16 onto the stack
-    Save,     // saves u16 into tape[registerA]
-    Add,      // pops the stack twice, adds the numbers & pushes the result
-    Start,    // where the program starts
-    Output,
 }
 
 impl Default for VM {
@@ -131,8 +92,8 @@ impl VM {
                 }
                 */
                 Direction::West
-            },
-            
+            }
+
             Direction::West => Direction::South,
             Direction::South => Direction::East,
             Direction::East => Direction::North,

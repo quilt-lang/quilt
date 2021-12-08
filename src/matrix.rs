@@ -1,5 +1,6 @@
-pub struct MatrixPoint (pub usize, pub usize);
+pub struct MatrixPoint(pub usize, pub usize);
 
+#[derive(Debug)]
 pub struct Matrix<T> {
     pub matrix: Vec<Vec<T>>,
 }

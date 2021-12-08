@@ -1,4 +1,4 @@
-use image::Rgb;
+use image::Rgba;
 
 /// Color represented in HSL for Quilt
 #[derive(Clone, Copy, Debug, Default)]
@@ -11,8 +11,8 @@ pub struct Hsl {
     pub l: u8,
 }
 
-impl From<Rgb<u8>> for Hsl {
-    fn from(rgb: Rgb<u8>) -> Self {
+impl From<Rgba<u8>> for Hsl {
+    fn from(rgb: Rgba<u8>) -> Self {
         HslFloats::from_rgb(&rgb.0).into()
     }
 }
@@ -122,11 +122,7 @@ impl HslFloats {
         // Hue is precise to milli-degrees, e.g. `74.52deg`.
         let h_degrees = (h * 360_f64 * 100_f64).round() / 100_f64;
 
-        HslFloats {
-            h: h_degrees,
-            s,
-            l,
-        }
+        HslFloats { h: h_degrees, s, l }
     }
 
     /// Convert HSL color to RGB

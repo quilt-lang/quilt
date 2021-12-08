@@ -1,13 +1,18 @@
 mod hsl;
+mod instruction;
 mod matrix;
 mod parser;
+mod pixel;
 mod vm;
 
-use crate::matrix::Matrix;
-use crate::parser::parse;
-use crate::vm::{Pixel, VM};
+pub use instruction::Instruction;
+pub use matrix::{Matrix, MatrixPoint};
+pub use pixel::Pixel;
+pub use vm::VM;
 
-fn main() {
+use parser::{parse, pixels};
+
+fn main_old() {
     let program = Matrix::new(vec![vec![
         Pixel::new(300),
         Pixel::new(180),
@@ -28,6 +33,6 @@ fn main() {
 }
 
 #[allow(unused)]
-fn main_old() {
-    parse().unwrap();
+fn main() {
+    parse(pixels("examples/hello_world.png").unwrap());
 }
