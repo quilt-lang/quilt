@@ -67,22 +67,34 @@ impl VM {
     }
 
     // prioritize roads over all other instructions besides the one in front of us
-    pub fn get_next_instruction(&self) -> Pixel {
+    pub fn get_next_instruction(&self) -> (Direction, Pixel) {
         let next_pixels = self.get_next_pixels();
         let (first_dir, first_pixel) = next_pixels[0];
         let first_road = next_pixels
             .iter()
             .filter(|(_dir, pixel)| matches!(pixel.as_instruction(), Instruction::Road))
             .next();
+
+        // take the first road available, unless it's in the opposite direction
+        // only take the opposite road if there are no other options
         if let Some((dir, road)) = first_road {
             if *dir != self.direction.opposite() {
-                return *road;
-            } else if first_dir == self.direction {
-                return first_pixel;
+                return (*dir, *road);
             }
         }
-        // We bounce
-        next_pixels.last().unwrap().1
+
+        // if there are no roads that don't lead backwards & there is an
+        // instruction in front, take it
+        if first_dir == self.direction {
+            (first_dir, first_pixel)
+        } else if let Some((opp_dir, pixel)) = next_pixels.last() {
+            // otherwise - if there are no roads to the left or right & nothing in front -
+            // we go backwards (no matter if it's a road or not)
+            (*opp_dir, *pixel)
+        } else {
+            // it should be impossible for there to be nothing in front of or behind
+            unreachable!()
+        }
     }
 
     // try the pixel ahead of us. If that doesn't exist,
@@ -140,6 +152,7 @@ mod test {
     fn init_vm(matrix: Vec<Vec<u16>>) -> VM {
         let mut vm = VM::new();
         vm.instructions = init_matrix(matrix);
+        vm.pc = vm.find_start();
         vm
     }
 
@@ -158,9 +171,7 @@ mod test {
             START, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306,
         ]]);
 
-        let start = vm.find_start();
-
-        assert_eq!(start, MatrixPoint(0, 0));
+        assert_eq!(vm.pc, MatrixPoint(0, 0));
     }
 
     #[test]
@@ -171,9 +182,7 @@ mod test {
             vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
         ]);
 
-        let start = vm.find_start();
-
-        assert_eq!(start, MatrixPoint(5, 1));
+        assert_eq!(vm.pc, MatrixPoint(5, 1));
     }
 
     #[test]
@@ -184,9 +193,7 @@ mod test {
             vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, START],
         ]);
 
-        let start = vm.find_start();
-
-        assert_eq!(start, MatrixPoint(11, 2));
+        assert_eq!(vm.pc, MatrixPoint(11, 2));
     }
 
     fn compare_pixels(actual: Vec<(Direction, Pixel)>, expected: Vec<(Direction, u16)>) {
@@ -201,11 +208,10 @@ mod test {
 
     #[test]
     fn test_get_next_pixels_east() {
-        let mut vm = init_vm(vec![vec![
+        let vm = init_vm(vec![vec![
             START, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306,
         ]]);
 
-        vm.pc = vm.find_start();
         let actual = vm.get_next_pixels();
         let expected = vec![(East, 180)];
         compare_pixels(actual, expected);
@@ -213,13 +219,12 @@ mod test {
 
     #[test]
     fn test_get_next_pixels_east_middle() {
-        let mut vm = init_vm(vec![
+        let vm = init_vm(vec![
             vec![0, 180, 180, 36, 1, 37, 2, 108, 36, 48, 108, 306],
             vec![0, 180, 180, 36, 1, START, 2, 108, 36, 48, 108, 306],
             vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
         ]);
 
-        vm.pc = vm.find_start();
         assert_eq!(vm.pc, MatrixPoint(5, 1));
         let pixels = vm.get_next_pixels();
 
@@ -230,13 +235,12 @@ mod test {
 
     #[test]
     fn test_get_next_pixels_east_bound() {
-        let mut vm = init_vm(vec![
+        let vm = init_vm(vec![
             vec![0, 180, 180, 36, 1, 37, 2, 108, 36, 48, 108, 310],
             vec![0, 180, 180, 36, 1, 108, 2, 108, 36, 48, 108, START],
             vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
         ]);
 
-        vm.pc = vm.find_start();
         assert_eq!(vm.pc, MatrixPoint(11, 1));
         let actual = vm.get_next_pixels();
 
@@ -255,7 +259,6 @@ mod test {
 
         vm.direction = North;
 
-        vm.pc = vm.find_start();
         assert_eq!(vm.pc, MatrixPoint(9, 1));
         let actual = vm.get_next_pixels();
 
@@ -274,7 +277,6 @@ mod test {
 
         vm.direction = North;
 
-        vm.pc = vm.find_start();
         assert_eq!(vm.pc, MatrixPoint(8, 0));
         let actual = vm.get_next_pixels();
 
@@ -293,7 +295,6 @@ mod test {
 
         vm.direction = West;
 
-        vm.pc = vm.find_start();
         assert_eq!(vm.pc, MatrixPoint(2, 1));
         let actual = vm.get_next_pixels();
 
@@ -312,7 +313,6 @@ mod test {
 
         vm.direction = South;
 
-        vm.pc = vm.find_start();
         assert_eq!(vm.pc, MatrixPoint(0, 2));
         let actual = vm.get_next_pixels();
 
@@ -331,7 +331,6 @@ mod test {
 
         vm.direction = South;
 
-        vm.pc = vm.find_start();
         assert_eq!(vm.pc, MatrixPoint(2, 0));
         let actual = vm.get_next_pixels();
 
@@ -350,12 +349,128 @@ mod test {
 
         vm.direction = West;
 
-        vm.pc = vm.find_start();
         assert_eq!(vm.pc, MatrixPoint(0, 1));
         let actual = vm.get_next_pixels();
 
         let expected = vec![(North, 0), (South, 0), (East, 180)];
 
         compare_pixels(actual, expected);
+    }
+
+    #[test]
+    fn test_get_next_instruction() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, 180, 36, 1, 37, 2, 108, 70, 48, 108, 310],
+            vec![START, 180, 180, 36, 1, 18, 2, 108, 36, 42, 108, 314],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = East;
+
+        assert_eq!(vm.pc, MatrixPoint(0, 1));
+        let (dir, pixel) = vm.get_next_instruction();
+
+        assert_eq!(dir, East);
+        assert_eq!(pixel.value, 180);
+    }
+
+    #[test]
+    fn test_get_next_instruction1() {
+        let mut vm = init_vm(vec![
+            vec![0, 180, 180, 36, 1, 37, 2, 108, 70, 48, 108, 310],
+            vec![START, 1, 180, 36, 1, 18, 2, 108, 36, 42, 108, 314],
+            vec![0, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = East;
+
+        let (dir, pixel) = vm.get_next_instruction();
+
+        assert_eq!(dir, East);
+        assert_eq!(pixel.value, 1);
+    }
+
+    #[test]
+    fn test_get_next_instruction2() {
+        let mut vm = init_vm(vec![
+            vec![180, 180, 180, 36, 1, 37, 2, 108, 70, 48, 108, 310],
+            vec![START, 1, 180, 36, 1, 18, 2, 108, 36, 42, 108, 314],
+            vec![180, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = East;
+
+        let (dir, pixel) = vm.get_next_instruction();
+
+        // take the road to the 'right' (south)
+        assert_eq!(dir, South);
+        assert_eq!(pixel.value, 180);
+    }
+
+    #[test]
+    fn test_get_next_instruction3() {
+        let mut vm = init_vm(vec![
+            vec![180, 180, 180, 36, 1, 37, 2, 108, 70, 48, 108, 310],
+            vec![180, 180, 180, 36, 1, 18, 2, 108, 36, 42, 180, START],
+            vec![180, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = East;
+
+        let (dir, pixel) = vm.get_next_instruction();
+
+        // turn around
+        assert_eq!(dir, West);
+        assert_eq!(pixel.value, 180);
+    }
+
+    #[test]
+    fn test_get_next_instruction4() {
+        let mut vm = init_vm(vec![
+            vec![180, 180, 180, 36, 1, 37, 2, 108, 70, 48, 108, 310],
+            vec![180, 180, 180, 36, 180, START, 2, 108, 36, 42, 180, 200],
+            vec![180, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = North;
+
+        let (dir, pixel) = vm.get_next_instruction();
+
+        // go 'left'
+        assert_eq!(dir, West);
+        assert_eq!(pixel.value, 180);
+    }
+
+    #[test]
+    fn test_get_next_instruction5() {
+        let mut vm = init_vm(vec![
+            vec![180, 180, 180, 36, 1, 37, 2, 108, 70, 48, 108, 310],
+            vec![180, 180, 180, 36, 1, START, 2, 108, 36, 42, 180, 200],
+            vec![180, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = North;
+
+        let (dir, pixel) = vm.get_next_instruction();
+
+        assert_eq!(dir, North);
+        assert_eq!(pixel.value, 37);
+    }
+
+    #[test]
+    fn test_get_next_instruction6() {
+        let mut vm = init_vm(vec![
+            vec![180, 180, 180, 36, 1, 37, 2, 108, 70, 48, 108, 180],
+            vec![180, 180, 180, 36, 1, 18, 2, 108, 36, 42, 180, START],
+            vec![180, 180, 180, 36, 1, 36, 2, 108, 36, 48, 108, 306],
+        ]);
+
+        vm.direction = East;
+
+        let (dir, pixel) = vm.get_next_instruction();
+
+        // don't turn around if there's another road available
+        assert_eq!(dir, North);
+        assert_eq!(pixel.value, 180);
     }
 }
