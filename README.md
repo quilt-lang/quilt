@@ -1,5 +1,7 @@
 # quilt
 
+[![Rust CI](https://github.com/quilt-lang/quilt/actions/workflows/rust.yml/badge.svg)](https://github.com/quilt-lang/quilt/actions/workflows/rust.yml)
+
 A programming language
 
 ## Usage
