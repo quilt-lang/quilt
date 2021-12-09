@@ -86,32 +86,53 @@ impl VM {
     }
 
     fn execute_instruction(&mut self, instruction: Instruction, arg: Option<Pixel>) -> Result<()> {
+        if instruction.takes_arg() && arg.is_none() {
+            return Err(anyhow!("no arg supplied"));
+        }
         match instruction {
-            Instruction::Road => Ok(()),
-            Instruction::Push => match arg {
-                Some(arg) => Ok(self.push(arg)),
-                None => Err(anyhow!("no arg supplied")),
-            },
-            Instruction::Add => self.add(),
+            Instruction::Road | Instruction::Start | Instruction::None => Ok(()),
+            Instruction::Push => Ok(self.push(arg.unwrap().value)),
+            Instruction::Add => self.infix(|a, b| a + b),
+            Instruction::Sub => self.infix(|a, b| a - b),
+            Instruction::Mult => self.infix(|a, b| a * b),
+            Instruction::Div => self.infix(|a, b| a / b),
+            Instruction::Modulo => self.infix(|a, b| a % b),
+            Instruction::LeftShift => self.unary_infix(|a| a << 1),
+            Instruction::RightShift => self.unary_infix(|a| a >> 1),
             Instruction::Output => self.output(),
             Instruction::OutputUntil => self.output_until(),
-            _ => todo!(),
+            Instruction::PushA => Ok(self.push(self.tape[self.register_a as usize])),
+            Instruction::PopUntil => self.pop_until(),
+            Instruction::Save => Ok(self.tape[self.register_a as usize] = arg.unwrap().value),
+            Instruction::MovA => Ok(self.register_a = arg.unwrap().value),
+            Instruction::PopA => Ok(self.register_a = self.pop()?),
+            Instruction::And => self.infix(|a, b| a & b),
+            Instruction::Or => self.infix(|a, b| a | b),
+            Instruction::Xor => self.infix(|a, b| a ^ b),
+            Instruction::Not => self.unary_infix(|a| !a),
         }
     }
 
-    fn push(&mut self, arg: Pixel) {
-        self.stack.push(arg.value)
+    fn push(&mut self, arg: u16) {
+        self.stack.push(arg)
     }
 
     fn pop(&mut self) -> Result<u16> {
         self.stack.pop().ok_or(anyhow!("stack is empty"))
     }
 
-    fn add(&mut self) -> Result<()> {
-        let a = self.pop()?;
+    // infix operations (add, sub, mult, div, modulo)
+    fn infix(&mut self, f: fn(u16, u16) -> u16) -> Result<()> {
         let b = self.pop()?;
+        let a = self.pop()?;
+        self.stack.push(f(a, b));
+        Ok(())
+    }
 
-        self.stack.push(a + b);
+    // infix operations that use a constant (and subsequently only pops once)
+    fn unary_infix(&mut self, f: fn(u16) -> u16) -> Result<()> {
+        let a = self.pop()?;
+        self.stack.push(f(a));
         Ok(())
     }
 
@@ -120,6 +141,16 @@ impl VM {
 
         while c != 0 {
             print!("{}", c as u8 as char);
+            c = self.pop()?;
+        }
+
+        Ok(())
+    }
+
+    fn pop_until(&mut self) -> Result<()> {
+        let mut c = self.pop()?;
+
+        while c != 0 {
             c = self.pop()?;
         }
 
@@ -187,10 +218,6 @@ impl VM {
         }
 
         next_pixels
-    }
-
-    fn get_next_pixel(&self) -> (Direction, Pixel) {
-        self.get_next_pixels()[0]
     }
 
     fn find_start(&self) -> MatrixPoint {

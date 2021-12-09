@@ -1,4 +1,3 @@
-use crate::hsl::Hsl;
 use crate::{Instruction, MatrixPoint};
 
 pub const START: u16 = 300;
@@ -19,11 +18,24 @@ impl Pixel {
             0..=8 => Instruction::PushA,
             18..=26 => Instruction::PopUntil,
             36..=44 => Instruction::Push,
+            54..=62 => Instruction::Save,
+            72..=80 => Instruction::MovA,
+            90..=98 => Instruction::PopA,
             108..=116 => Instruction::Add,
+            126..=134 => Instruction::Sub,
+            144..=152 => Instruction::Mult,
+            162..=170 => Instruction::Div,
             180..=188 => Instruction::Road,
-            START => Instruction::Start,
+            198..=206 => Instruction::LeftShift,
+            216..=224 => Instruction::RightShift,
+            234..=242 => Instruction::And,
+            252..=260 => Instruction::Or,
+            270..=278 => Instruction::Not,
+            288..=296 => Instruction::Xor,
             306..=314 => Instruction::Output,
             324..=332 => Instruction::OutputUntil,
+            342..=350 => Instruction::Modulo,
+            START => Instruction::Start,
             _ => Instruction::None,
         }
     }
