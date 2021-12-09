@@ -1,22 +1,11 @@
-mod hsl;
-mod instruction;
-mod matrix;
-mod parser;
-mod pixel;
-mod vm;
-
-pub use instruction::Instruction;
-pub use matrix::{Matrix, MatrixPoint};
-pub use pixel::Pixel;
-pub use vm::VM;
-
 use clap::Parser as ClapParser;
-use parser::{parse, pixels};
+
+use quilt;
 
 /// Run a quilt program
 #[derive(ClapParser)]
 #[clap(about, version, author)]
-struct Args {
+pub struct Args {
     /// A quilt program
     file: String,
 
@@ -27,7 +16,5 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let program = parse(pixels(args.file, args.pixel_size as u32).unwrap());
-    let mut vm = VM::new();
-    vm.execute(program);
+    quilt::run(&args.file, args.pixel_size as u32);
 }

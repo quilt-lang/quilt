@@ -94,6 +94,7 @@ impl VM {
                 None => Err(anyhow!("no arg supplied")),
             },
             Instruction::Add => self.add(),
+            Instruction::Output => self.output(),
             Instruction::OutputUntil => self.output_until(),
             _ => todo!(),
         }
@@ -103,22 +104,32 @@ impl VM {
         self.stack.push(arg.value)
     }
 
+    fn pop(&mut self) -> Result<u16> {
+        self.stack.pop().ok_or(anyhow!("stack is empty"))
+    }
+
     fn add(&mut self) -> Result<()> {
-        // TODO this is ugly
-        let a = self.stack.pop().ok_or(anyhow!("stack is empty"))?;
-        let b = self.stack.pop().ok_or(anyhow!("stack is empty"))?;
+        let a = self.pop()?;
+        let b = self.pop()?;
 
         self.stack.push(a + b);
         Ok(())
     }
 
     fn output_until(&mut self) -> Result<()> {
-        let mut c = self.stack.pop().ok_or(anyhow!("stack is empty"))?;
+        let mut c = self.pop()?;
 
         while c != 0 {
-            println!("{}", c as u8 as char);
-            c = self.stack.pop().ok_or(anyhow!("stack is empty"))?;
+            print!("{}", c as u8 as char);
+            c = self.pop()?;
         }
+
+        Ok(())
+    }
+
+    fn output(&mut self) -> Result<()> {
+        print!("{}", self.pop()? as u8 as char);
+
         Ok(())
     }
 

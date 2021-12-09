@@ -54,11 +54,6 @@ impl HslFloats {
     ///
     /// Expects RGB pixel to be a slice of three `u8`s representing the red, green and blue values.
     ///
-    /// ```rust
-    /// use hsl::HSL;
-    /// let blue = HSL::from_rgb(&[0, 0, 255]);
-    /// ```
-    ///
     /// Algorithm from [go-color] by Brandon Thomson <bt@brandonthomson.com>. (Iternally converts
     /// the pixel to RGB before converting it to HSL.)
     ///
@@ -126,13 +121,6 @@ impl HslFloats {
     }
 
     /// Convert HSL color to RGB
-    ///
-    /// ```rust
-    /// use hsl::HSL;
-    ///
-    /// let cyan = HSL { h: 180_f64, s: 1_f64, l: 0.5_f64 };
-    /// assert_eq!(cyan.to_rgb(), (0, 255, 255));
-    /// ```
     #[allow(unused)]
     pub fn to_rgb(&self) -> (u8, u8, u8) {
         if self.s == 0.0 {
