@@ -1,7 +1,20 @@
-use crate::vm::Direction;
+use crate::vm::Direction::{self, East, North, South, West};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct MatrixPoint(pub usize, pub usize);
+
+impl MatrixPoint {
+    pub fn neighbor(&self, direction: Direction) -> Option<Self> {
+        match (direction, *self) {
+            (North, Self(_, 0)) => None,
+            (West, Self(0, _)) => None,
+            (North, Self(x, y)) => Some(Self(x, y - 1)),
+            (West, Self(x, y)) => Some(Self(x - 1, y)),
+            (South, Self(x, y)) => Some(Self(x, y + 1)),
+            (East, Self(x, y)) => Some(Self(x + 1, y)),
+        }
+    }
+}
 
 #[derive(Debug, PartialEq)]
 pub struct Matrix<T> {
@@ -39,26 +52,14 @@ impl<T: Copy> Matrix<T> {
     /// If there is no cell in that direction, None is returned
     /// Otherwise Some(NewMatrixPoint) is returned
     pub fn go(&self, point: MatrixPoint, direction: Direction) -> Option<T> {
-        let MatrixPoint(x, y) = point;
+        point.neighbor(direction).and_then(|p| self.get(p))
+    }
 
-        match direction {
-            Direction::North => {
-                if y == 0 {
-                    None
-                } else {
-                    self.get(MatrixPoint(x, y - 1))
-                }
-            }
-            Direction::West => {
-                if x == 0 {
-                    None
-                } else {
-                    self.get(MatrixPoint(x - 1, y))
-                }
-            }
-            Direction::South => self.get(MatrixPoint(x, y + 1)),
-            Direction::East => self.get(MatrixPoint(x + 1, y)),
-        }
+    pub fn corner(&self, point: MatrixPoint, dir1: Direction, dir2: Direction) -> Option<T> {
+        point
+            .neighbor(dir1)
+            .and_then(|p| p.neighbor(dir2))
+            .and_then(|p| self.get(p))
     }
 }
 

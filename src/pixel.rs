@@ -1,4 +1,4 @@
-use crate::{Instruction, MatrixPoint};
+use crate::{Condition, Instruction, MatrixPoint};
 
 pub const START: u16 = 300;
 
@@ -42,5 +42,16 @@ impl Pixel {
 
     pub fn as_data(&self) -> u16 {
         self.value
+    }
+
+    pub fn as_condition(&self) -> Condition {
+        match self.value {
+            0..=8 => Condition::NotEqual,
+            72..=80 => Condition::Less,
+            144..=152 => Condition::LessEqual,
+            216..=224 => Condition::Greater,
+            288..=296 => Condition::GreaterEqual,
+            _ => Condition::Equal,
+        }
     }
 }

@@ -1,15 +1,15 @@
 use anyhow::{anyhow, Result};
 use std::io::{self, Write};
 
-use crate::{Instruction, Pixel};
+use crate::{Condition, Instruction, Pixel};
 use crate::{Matrix, MatrixPoint};
 
 const TAPE_SIZE: usize = 360;
 
 pub struct VM<T: Write> {
-    stack: Vec<u16>,
+    stack: Vec<i16>,
     register_a: u16,
-    tape: [u16; TAPE_SIZE],
+    tape: [i16; TAPE_SIZE],
     direction: Direction,
     instructions: Matrix<Pixel>,
     pc: MatrixPoint,
@@ -41,6 +41,11 @@ impl Direction {
             Direction::South => Direction::East,
             Direction::East => Direction::North,
         }
+    }
+
+    #[inline]
+    pub fn clockwise(&self) -> Direction {
+        self.opposite().counter_clockwise()
     }
 }
 
@@ -80,16 +85,24 @@ impl<T: Write> VM<T> {
             self.pc = pixel.point;
 
             let instruction = pixel.as_instruction();
-            let mut arg = None;
+
+            let condition = if instruction.is_conditional() {
+                self.get_condition()
+            } else {
+                Condition::Equal
+            };
 
             // does the instruction take an arg?
-            if instruction.takes_arg() {
-                arg = Some(self.get_next_instruction());
-                self.pc = arg.unwrap().point;
-            }
+            let arg = if instruction.takes_arg() {
+                let arg_pixel = self.get_next_instruction();
+                self.pc = arg_pixel.point;
+                Some(arg_pixel)
+            } else {
+                None
+            };
 
             // execute the instruction
-            if let Err(e) = self.execute_instruction(instruction, arg) {
+            if let Err(e) = self.execute_instruction(instruction, arg, condition) {
                 eprintln!("{}", e);
                 break;
             }
@@ -97,14 +110,19 @@ impl<T: Write> VM<T> {
     }
 
     #[allow(clippy::unit_arg)]
-    fn execute_instruction(&mut self, instruction: Instruction, arg: Option<Pixel>) -> Result<()> {
+    fn execute_instruction(
+        &mut self,
+        instruction: Instruction,
+        arg: Option<Pixel>,
+        condition: Condition,
+    ) -> Result<()> {
         if instruction.takes_arg() && arg.is_none() {
             return Err(anyhow!("no arg supplied"));
         }
 
         match instruction {
             Instruction::Road | Instruction::Start | Instruction::None => Ok(()),
-            Instruction::Push => Ok(self.push(arg.unwrap().value)),
+            Instruction::Push => Ok(self.push(arg.unwrap().value as i16)),
             Instruction::Add => self.infix(|a, b| a + b),
             Instruction::Sub => self.infix(|a, b| a - b),
             Instruction::Mult => self.infix(|a, b| a * b),
@@ -113,12 +131,14 @@ impl<T: Write> VM<T> {
             Instruction::LeftShift => self.unary_infix(|a| a << 1),
             Instruction::RightShift => self.unary_infix(|a| a >> 1),
             Instruction::Output => self.output(),
-            Instruction::OutputUntil => self.output_until(),
+            Instruction::OutputUntil => self.output_until(condition),
             Instruction::PushA => Ok(self.push(self.tape[self.register_a as usize])),
-            Instruction::PopUntil => self.pop_until(),
-            Instruction::Save => Ok(self.tape[self.register_a as usize] = arg.unwrap().value),
+            Instruction::PopUntil => self.pop_until(condition),
+            Instruction::Save => {
+                Ok(self.tape[self.register_a as usize] = arg.unwrap().value as i16)
+            }
             Instruction::MovA => Ok(self.register_a = arg.unwrap().value),
-            Instruction::PopA => Ok(self.register_a = self.pop()?),
+            Instruction::PopA => Ok(self.register_a = self.pop()? as u16),
             Instruction::And => self.infix(|a, b| a & b),
             Instruction::Or => self.infix(|a, b| a | b),
             Instruction::Xor => self.infix(|a, b| a ^ b),
@@ -126,16 +146,16 @@ impl<T: Write> VM<T> {
         }
     }
 
-    fn push(&mut self, arg: u16) {
+    fn push(&mut self, arg: i16) {
         self.stack.push(arg)
     }
 
-    fn pop(&mut self) -> Result<u16> {
+    fn pop(&mut self) -> Result<i16> {
         self.stack.pop().ok_or(anyhow!("stack is empty"))
     }
 
     // infix operations (add, sub, mult, div, modulo)
-    fn infix(&mut self, f: fn(u16, u16) -> u16) -> Result<()> {
+    fn infix(&mut self, f: fn(i16, i16) -> i16) -> Result<()> {
         let b = self.pop()?;
         let a = self.pop()?;
         self.stack.push(f(a, b));
@@ -143,16 +163,17 @@ impl<T: Write> VM<T> {
     }
 
     // infix operations that use a constant (and subsequently only pops once)
-    fn unary_infix(&mut self, f: fn(u16) -> u16) -> Result<()> {
+    fn unary_infix(&mut self, f: fn(i16) -> i16) -> Result<()> {
         let a = self.pop()?;
         self.stack.push(f(a));
         Ok(())
     }
 
-    fn output_until(&mut self) -> Result<()> {
+    fn output_until(&mut self, condition: Condition) -> Result<()> {
+        // TODO: switch exit direction as we keep popping.
         let mut c = self.pop()?;
 
-        while c != 0 {
+        while !condition.compare(c) {
             write!(self.out, "{}", c as u8 as char)?;
             c = self.pop()?;
         }
@@ -160,10 +181,11 @@ impl<T: Write> VM<T> {
         Ok(())
     }
 
-    fn pop_until(&mut self) -> Result<()> {
+    fn pop_until(&mut self, condition: Condition) -> Result<()> {
+        // TODO: switch exit direction as we keep popping.
         let mut c = self.pop()?;
 
-        while c != 0 {
+        while !condition.compare(c) {
             c = self.pop()?;
         }
 
@@ -218,10 +240,10 @@ impl<T: Write> VM<T> {
         let mut next_pixels = vec![];
 
         let directions = [
-            self.direction,                                // forward
-            self.direction.counter_clockwise().opposite(), // right
-            self.direction.counter_clockwise(),            // left
-            self.direction.opposite(),                     // back
+            self.direction,                     // forward
+            self.direction.clockwise(),         // right
+            self.direction.counter_clockwise(), // left
+            self.direction.opposite(),          // back
         ];
 
         for dir in directions {
@@ -231,6 +253,19 @@ impl<T: Write> VM<T> {
         }
 
         next_pixels
+    }
+
+    // this is called when the program counter is _at_ the conditional (roundabout).
+    // to get the correct condition (traffic light) we need to move one pixel back
+    // to where we came from and check on the right-hand side.
+    fn get_condition(&self) -> Condition {
+        let back = self.direction.opposite();
+        let right = self.direction.clockwise();
+        if let Some(point) = self.instructions.corner(self.pc, back, right) {
+            point.as_condition()
+        } else {
+            Condition::Equal
+        }
     }
 
     fn find_start(&self) -> MatrixPoint {

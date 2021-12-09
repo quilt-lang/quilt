@@ -29,4 +29,8 @@ impl Instruction {
     pub fn takes_arg(&self) -> bool {
         matches!(self, Self::Push | Self::MovA | Self::Save)
     }
+
+    pub fn is_conditional(&self) -> bool {
+        matches!(self, Self::PopUntil | Self::OutputUntil)
+    }
 }

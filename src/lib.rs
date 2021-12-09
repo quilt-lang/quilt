@@ -1,3 +1,4 @@
+mod condition;
 mod hsl;
 mod instruction;
 mod matrix;
@@ -5,6 +6,7 @@ mod parser;
 mod pixel;
 mod vm;
 
+pub use condition::Condition;
 pub use instruction::Instruction;
 pub use matrix::{Matrix, MatrixPoint};
 pub use pixel::Pixel;
