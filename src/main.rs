@@ -1,5 +1,7 @@
 use clap::Parser as ClapParser;
 
+use std::io;
+
 /// Run a quilt program
 #[derive(ClapParser)]
 #[clap(about, version, author)]
@@ -14,5 +16,5 @@ pub struct Args {
 
 fn main() {
     let args = Args::parse();
-    quilt::run(&args.file, args.pixel_size as u32);
+    quilt::run(&args.file, args.pixel_size as u32, io::stdout());
 }

@@ -12,8 +12,10 @@ pub use vm::VM;
 
 use parser::{parse, pixels};
 
-pub fn run(file: &str, pixel_size: u32) {
+use std::io::Write;
+
+pub fn run<T: Write>(file: &str, pixel_size: u32, out: T) {
     let program = parse(pixels(file, pixel_size).unwrap());
-    let mut vm = VM::default();
+    let mut vm = VM::new(out);
     vm.execute(program);
 }

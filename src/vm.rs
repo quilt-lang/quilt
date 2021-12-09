@@ -101,6 +101,7 @@ impl<T: Write> VM<T> {
         if instruction.takes_arg() && arg.is_none() {
             return Err(anyhow!("no arg supplied"));
         }
+
         match instruction {
             Instruction::Road | Instruction::Start | Instruction::None => Ok(()),
             Instruction::Push => Ok(self.push(arg.unwrap().value)),
