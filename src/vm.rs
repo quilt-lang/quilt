@@ -1,17 +1,19 @@
 use anyhow::{anyhow, Result};
+use std::io::{self, Write};
 
 use crate::{Instruction, Pixel};
 use crate::{Matrix, MatrixPoint};
 
 const TAPE_SIZE: usize = 360;
 
-pub struct VM {
+pub struct VM<T: Write> {
     stack: Vec<u16>,
     register_a: u16,
     tape: [u16; TAPE_SIZE],
     direction: Direction,
     instructions: Matrix<Pixel>,
     pc: MatrixPoint,
+    out: T,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -42,8 +44,8 @@ impl Direction {
     }
 }
 
-impl Default for VM {
-    fn default() -> VM {
+impl Default for VM<io::Stdout> {
+    fn default() -> VM<io::Stdout> {
         VM {
             stack: vec![],
             register_a: 0,
@@ -51,13 +53,22 @@ impl Default for VM {
             direction: Direction::East,
             instructions: Matrix::new(vec![]),
             pc: MatrixPoint(0, 0),
+            out: io::stdout(),
         }
     }
 }
 
-impl VM {
-    pub fn new() -> VM {
-        VM::default()
+impl<T: Write> VM<T> {
+    pub fn new(out: T) -> VM<T> {
+        VM {
+            stack: vec![],
+            register_a: 0,
+            tape: [0; TAPE_SIZE],
+            direction: Direction::East,
+            instructions: Matrix::new(vec![]),
+            pc: MatrixPoint(0, 0),
+            out,
+        }
     }
 
     pub fn execute(&mut self, instructions: Matrix<Pixel>) {
@@ -140,7 +151,7 @@ impl VM {
         let mut c = self.pop()?;
 
         while c != 0 {
-            print!("{}", c as u8 as char);
+            write!(self.out, "{}", c as u8 as char)?;
             c = self.pop()?;
         }
 
@@ -158,7 +169,8 @@ impl VM {
     }
 
     fn output(&mut self) -> Result<()> {
-        print!("{}", self.pop()? as u8 as char);
+        let c = self.pop()?;
+        write!(self.out, "{}", c as u8 as char)?;
 
         Ok(())
     }
@@ -240,9 +252,12 @@ mod test {
     use crate::pixel::START;
     use crate::vm::Direction::{East, North, South, West};
     use crate::{Matrix, MatrixPoint, Pixel};
+    use std::io;
 
-    fn init_vm(matrix: Vec<Vec<u16>>) -> VM {
-        let mut vm = VM::new();
+    fn init_vm(matrix: Vec<Vec<u16>>) -> VM<io::Stdout> {
+        // we aren't checking the output in these tests, so it's okay
+        // to return io::Stdout
+        let mut vm = VM::default();
         vm.instructions = init_matrix(matrix);
         vm.pc = vm.find_start();
         vm

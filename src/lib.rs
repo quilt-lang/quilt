@@ -14,6 +14,6 @@ use parser::{parse, pixels};
 
 pub fn run(file: &str, pixel_size: u32) {
     let program = parse(pixels(file, pixel_size).unwrap());
-    let mut vm = VM::new();
+    let mut vm = VM::default();
     vm.execute(program);
 }
