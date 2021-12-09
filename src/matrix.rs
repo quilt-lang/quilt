@@ -21,11 +21,7 @@ impl<T: Copy> Matrix<T> {
         }
 
         if let Some(row) = self.matrix.get(0) {
-            if x >= row.len() {
-                false
-            } else {
-                true
-            }
+            x < row.len()
         } else {
             false
         }

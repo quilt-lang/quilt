@@ -1,7 +1,5 @@
 use clap::Parser as ClapParser;
 
-use quilt;
-
 /// Run a quilt program
 #[derive(ClapParser)]
 #[clap(about, version, author)]

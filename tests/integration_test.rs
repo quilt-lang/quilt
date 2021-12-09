@@ -1,5 +1,3 @@
-use quilt;
-
 #[test]
 fn test() {
     // TODO pass fd for output here

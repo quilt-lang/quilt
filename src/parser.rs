@@ -30,8 +30,7 @@ pub fn parse(pixels: Vec<(u32, u32, Hsl)>) -> Matrix<Pixel> {
             prev_y = y;
             row = vec![];
         }
-        let hsl: Hsl = p.into();
-        row.push(Pixel::new(hsl.h, MatrixPoint(x as usize, y as usize)));
+        row.push(Pixel::new(p.h, MatrixPoint(x as usize, y as usize)));
     }
     rows.push(row);
     Matrix::new(rows)

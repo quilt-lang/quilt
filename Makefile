@@ -10,10 +10,10 @@ build:
 	cargo build
 
 fmt:
-	cargo fmt -- --check --verbose
+	cargo fmt -- --check
 
 clippy:
-	cargo clippy --all-targets -- --forbid warnings
+	cargo clippy --all-targets -- --deny warnings
 
 test:
 	cargo test -- --nocapture

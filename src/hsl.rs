@@ -58,7 +58,7 @@ impl HslFloats {
     /// the pixel to RGB before converting it to HSL.)
     ///
     /// [go-color]: https://github.com/bthomson/go-color
-    #[cfg_attr(feature = "dev", allow(float_cmp))]
+    #[allow(clippy::float_cmp, clippy::many_single_char_names)]
     pub fn from_rgb(rgb: &[u8]) -> HslFloats {
         use std::cmp::{max, min};
 
@@ -110,7 +110,7 @@ impl HslFloats {
         // Fix wraparounds
         if h < 0 as f64 {
             h += 1_f64;
-        } else if h > 1 as f64 {
+        } else if h > 1_f64 {
             h -= 1_f64;
         }
 
@@ -121,8 +121,8 @@ impl HslFloats {
     }
 
     /// Convert HSL color to RGB
-    #[allow(unused)]
-    pub fn to_rgb(&self) -> (u8, u8, u8) {
+    #[allow(unused, clippy::many_single_char_names)]
+    pub fn to_rgb(self) -> (u8, u8, u8) {
         if self.s == 0.0 {
             // Achromatic, i.e., grey.
             let l = percent_to_byte(self.l);

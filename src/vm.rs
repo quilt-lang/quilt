@@ -96,6 +96,7 @@ impl<T: Write> VM<T> {
         }
     }
 
+    #[allow(clippy::unit_arg)]
     fn execute_instruction(&mut self, instruction: Instruction, arg: Option<Pixel>) -> Result<()> {
         if instruction.takes_arg() && arg.is_none() {
             return Err(anyhow!("no arg supplied"));
@@ -181,8 +182,7 @@ impl<T: Write> VM<T> {
         let (first_dir, first_pixel) = next_pixels[0];
         let first_road = next_pixels
             .iter()
-            .filter(|(_dir, pixel)| matches!(pixel.as_instruction(), Instruction::Road))
-            .next();
+            .find(|(_dir, pixel)| matches!(pixel.as_instruction(), Instruction::Road));
 
         // take the first road available, unless it's in the opposite direction
         // only take the opposite road if there are no other options
