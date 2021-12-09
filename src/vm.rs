@@ -64,7 +64,6 @@ impl VM {
         self.instructions = instructions;
         self.pc = self.find_start();
 
-        let mut last_instruction = Instruction::None;
         loop {
             let pixel = self.get_next_instruction();
             self.pc = pixel.point;
