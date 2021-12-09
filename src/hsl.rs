@@ -20,7 +20,7 @@ impl From<Rgba<u8>> for Hsl {
 impl From<HslFloats> for Hsl {
     fn from(hsl: HslFloats) -> Self {
         Hsl {
-            h: hsl.h as u16,
+            h: hsl.h.round() as u16,
             s: (hsl.s * 100.0) as u8,
             l: (hsl.l * 100.0) as u8,
         }
@@ -173,5 +173,18 @@ fn hue_to_rgb(p: f64, q: f64, t: f64) -> f64 {
         p + (q - p) * (2.0 / 3.0 - t) * 6.0
     } else {
         p
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Hsl;
+    use image::Rgba;
+
+    #[test]
+    fn test_hsl() {
+        let rgba = Rgba([0x51, 0xff, 0x00, 0xff]);
+        let hsl: Hsl = rgba.into();
+        assert_eq!(hsl.h, 101);
     }
 }
