@@ -122,7 +122,7 @@ Execution starts at the bottom left corner of the image. This pixel has a hue of
 All the purple in the image in between the cyan roads is technically an `or` instruction, but is never executed due to the precendence rules of quilt, so can technically be any color, except a road.
 
 ### Fib(n)
-Since there is no input, to calculate fib(n), n must be hardcoded into the program. Changing the hue of the pixel at (11, 29) will change `n`. In this image, it is 6. Also, quilt provides no way to print digits with a length of more than one, so for inputs > 6 (where fib(n).to_string().len() > 1) the output will only be viewable as ascii characters with the corresponding value of fib(n).
+Since there is no input, to calculate fib(n), n must be hardcoded into the program. Changing the hue of the pixel at (11, 29) will change `n`. In this image, it is 6. Also, quilt provides no way to print digits with a length of more than one, so for inputs > 6 (where `fib(n).to_string().len() > 1`) the output will only be viewable as ascii characters with the corresponding value of fib(n).
 
 <img width="527" alt="Screen Shot 2021-12-09 at 11 04 25 PM" src="https://user-images.githubusercontent.com/3004336/145515440-456e9d21-c882-4442-a73b-0cbb4c588f7f.png">
 
