@@ -137,8 +137,10 @@ impl<T: Write> VM<T> {
             Instruction::Save => {
                 Ok(self.tape[self.register_a as usize] = arg.unwrap().value as i16)
             }
+            Instruction::PopA => {
+                Ok(self.tape[self.register_a as usize] = self.pop()?)
+            }
             Instruction::MovA => Ok(self.register_a = arg.unwrap().value),
-            Instruction::PopA => Ok(self.register_a = self.pop()? as u16),
             Instruction::And => self.infix(|a, b| a & b),
             Instruction::Or => self.infix(|a, b| a | b),
             Instruction::Xor => self.infix(|a, b| a ^ b),
@@ -178,6 +180,7 @@ impl<T: Write> VM<T> {
             c = self.pop()?;
         }
 
+        // TODO maybe push c back on the stack here
         Ok(())
     }
 

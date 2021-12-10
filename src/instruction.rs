@@ -5,7 +5,7 @@ pub enum Instruction {
     Push,        // pushes a u16 onto the stack
     Save,        // saves u16 into tape[registerA]
     MovA,        // moves an address into the registerA
-    PopA,        // pops the stack and saves the value in registerA
+    PopA,        // pops the stack and saves into tape[registerA]
     Add,         // pops the stack twice, adds the numbers & pushes the result
     Sub,         // pops the stack twice, subs the numbers & pushes the result
     Mult,        // pops the stack twice, multiplies the numbers & pushes the result
