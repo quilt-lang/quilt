@@ -9,7 +9,7 @@ pub enum Condition {
 }
 
 impl Condition {
-    pub fn compare(&self, x: i16) -> bool {
+    pub fn compare(&self, x: i64) -> bool {
         match self {
             Self::Equal => x == 0,
             Self::NotEqual => x != 0,

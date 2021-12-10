@@ -7,9 +7,9 @@ use crate::{Matrix, MatrixPoint};
 const TAPE_SIZE: usize = 360;
 
 pub struct VM<T: Write> {
-    stack: Vec<i16>,
+    stack: Vec<i64>,
     register_a: u16,
-    tape: [i16; TAPE_SIZE],
+    tape: [i64; TAPE_SIZE],
     direction: Direction,
     instructions: Matrix<Pixel>,
     pc: MatrixPoint,
@@ -122,7 +122,7 @@ impl<T: Write> VM<T> {
 
         match instruction {
             Instruction::Road | Instruction::Start | Instruction::None => Ok(()),
-            Instruction::Push => Ok(self.push(arg.unwrap().value as i16)),
+            Instruction::Push => Ok(self.push(arg.unwrap().value as i64)),
             Instruction::Add => self.infix(|a, b| a + b),
             Instruction::Sub => self.infix(|a, b| a - b),
             Instruction::Mult => self.infix(|a, b| a * b),
@@ -135,11 +135,9 @@ impl<T: Write> VM<T> {
             Instruction::PushA => Ok(self.push(self.tape[self.register_a as usize])),
             Instruction::PopUntil => self.pop_until(condition),
             Instruction::Save => {
-                Ok(self.tape[self.register_a as usize] = arg.unwrap().value as i16)
+                Ok(self.tape[self.register_a as usize] = arg.unwrap().value as i64)
             }
-            Instruction::PopA => {
-                Ok(self.tape[self.register_a as usize] = self.pop()?)
-            }
+            Instruction::PopA => Ok(self.tape[self.register_a as usize] = self.pop()?),
             Instruction::MovA => Ok(self.register_a = arg.unwrap().value),
             Instruction::And => self.infix(|a, b| a & b),
             Instruction::Or => self.infix(|a, b| a | b),
@@ -148,16 +146,16 @@ impl<T: Write> VM<T> {
         }
     }
 
-    fn push(&mut self, arg: i16) {
+    fn push(&mut self, arg: i64) {
         self.stack.push(arg)
     }
 
-    fn pop(&mut self) -> Result<i16> {
+    fn pop(&mut self) -> Result<i64> {
         self.stack.pop().ok_or(anyhow!("stack is empty"))
     }
 
     // infix operations (add, sub, mult, div, modulo)
-    fn infix(&mut self, f: fn(i16, i16) -> i16) -> Result<()> {
+    fn infix(&mut self, f: fn(i64, i64) -> i64) -> Result<()> {
         let b = self.pop()?;
         let a = self.pop()?;
         self.stack.push(f(a, b));
@@ -165,7 +163,7 @@ impl<T: Write> VM<T> {
     }
 
     // infix operations that use a constant (and subsequently only pops once)
-    fn unary_infix(&mut self, f: fn(i16) -> i16) -> Result<()> {
+    fn unary_infix(&mut self, f: fn(i64) -> i64) -> Result<()> {
         let a = self.pop()?;
         self.stack.push(f(a));
         Ok(())
