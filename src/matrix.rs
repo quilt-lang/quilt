@@ -1,6 +1,6 @@
 use crate::vm::Direction::{self, East, North, South, West};
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct MatrixPoint(pub usize, pub usize);
 
 impl MatrixPoint {

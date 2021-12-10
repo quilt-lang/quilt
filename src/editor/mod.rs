@@ -2,6 +2,7 @@ mod editor;
 mod pixel_widget;
 mod util;
 
+use crate::vm::Direction;
 use editor::ImageEditor;
 use util::event::{Event, Events};
 
@@ -16,7 +17,7 @@ pub fn run(file: &str, pixel_size: u32) {
     let stdout = AlternateScreen::from(stdout);
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend).unwrap();
-    let editor = ImageEditor::new(file, pixel_size);
+    let mut editor = ImageEditor::new(file, pixel_size);
 
     // Setup event handlers
     let events = Events::new();
@@ -40,6 +41,10 @@ pub fn run(file: &str, pixel_size: u32) {
         if let Event::Input(input) = events.next().unwrap() {
             match input {
                 Key::Ctrl('c') | Key::Char('q') => break,
+                Key::Char('h') | Key::Left => editor.go(Direction::West, 1),
+                Key::Char('l') | Key::Right => editor.go(Direction::East, 1),
+                Key::Char('j') | Key::Down => editor.go(Direction::South, 1),
+                Key::Char('k') | Key::Up => editor.go(Direction::North, 1),
                 _ => (),
             };
         }
