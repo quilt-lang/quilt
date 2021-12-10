@@ -1,20 +1,20 @@
-use crate::{Condition, Instruction, MatrixPoint};
+use crate::{Condition, Hsl, Instruction, MatrixPoint};
 
 pub const START: u16 = 300;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Pixel {
-    pub value: u16,
+    pub hsl: Hsl,
     pub point: MatrixPoint,
 }
 
 impl Pixel {
-    pub fn new(value: u16, point: MatrixPoint) -> Pixel {
-        Pixel { value, point }
+    pub fn new(hsl: Hsl, point: MatrixPoint) -> Pixel {
+        Pixel { hsl, point }
     }
 
     pub fn as_instruction(&self) -> Instruction {
-        match self.value {
+        match self.value() {
             0..=8 => Instruction::PushA,
             18..=26 => Instruction::PopUntil,
             36..=44 => Instruction::Push,
@@ -40,12 +40,17 @@ impl Pixel {
         }
     }
 
+    #[inline]
+    pub fn value(&self) -> u16 {
+        self.hsl.h
+    }
+
     pub fn as_data(&self) -> u16 {
-        self.value
+        self.value()
     }
 
     pub fn as_condition(&self) -> Condition {
-        match self.value {
+        match self.value() {
             0..=8 => Condition::NotEqual,
             72..=80 => Condition::Less,
             144..=152 => Condition::LessEqual,

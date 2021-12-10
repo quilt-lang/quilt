@@ -30,7 +30,7 @@ pub fn parse(pixels: Vec<(u32, u32, Hsl)>) -> Matrix<Pixel> {
             prev_y = y;
             row = vec![];
         }
-        row.push(Pixel::new(p.h, MatrixPoint(x as usize, y as usize)));
+        row.push(Pixel::new(p, MatrixPoint(x as usize, y as usize)));
     }
     rows.push(row);
     Matrix::new(rows)
@@ -63,10 +63,10 @@ mod test {
     fn test_parse() {
         let pixels = create_pixels(vec![0, 1, 2, 3], 2, 2);
         let matrix = parse(pixels);
-        assert_eq!(matrix.matrix[0][0].value, 0);
-        assert_eq!(matrix.matrix[0][1].value, 1);
-        assert_eq!(matrix.matrix[1][0].value, 2);
-        assert_eq!(matrix.matrix[1][1].value, 3);
+        assert_eq!(matrix.matrix[0][0].value(), 0);
+        assert_eq!(matrix.matrix[0][1].value(), 1);
+        assert_eq!(matrix.matrix[1][0].value(), 2);
+        assert_eq!(matrix.matrix[1][1].value(), 3);
     }
 
     #[test]

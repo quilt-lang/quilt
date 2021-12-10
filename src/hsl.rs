@@ -1,7 +1,7 @@
 use image::Rgba;
 
 /// Color represented in HSL for Quilt
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Hsl {
     /// Hue in 0-360 degree
     pub h: u16,
@@ -14,6 +14,14 @@ pub struct Hsl {
 impl From<Rgba<u8>> for Hsl {
     fn from(rgb: Rgba<u8>) -> Self {
         HslFloats::from_rgb(&rgb.0).into()
+    }
+}
+
+impl From<Hsl> for Rgba<u8> {
+    fn from(hsl: Hsl) -> Self {
+        let hslf: HslFloats = hsl.into();
+        let (r, g, b) = hslf.to_rgb();
+        Self([r, g, b, 0xff])
     }
 }
 
