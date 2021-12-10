@@ -1,13 +1,18 @@
 # quilt
 
+[![Crates.io](https://img.shields.io/crates/v/quilt-lang)](https://crates.io/crates/quilt-lang)
+[![MIT License](https://img.shields.io/crates/l/quilt-lang)](https://github.com/quilt-lang/quilt/blob/master/LICENSE)
+[![Downloads](https://img.shields.io/crates/d/quilt-lang)](https://crates.io/crates/quilt-lang)
+[![Lines of code](https://img.shields.io/tokei/lines/github/quilt-lang/quilt)](https://github.com/quilt-lang/quilt)
 [![Rust CI](https://github.com/quilt-lang/quilt/actions/workflows/rust.yml/badge.svg)](https://github.com/quilt-lang/quilt/actions/workflows/rust.yml)
 
 A programming language
 
 ## Table of Contents
-1. [Usage](#usage)
-2. [Development](#useful-commands)
-3. [Documentation](#documentation)
+1. [Installation](#installation)
+2. [Usage](#usage)
+3. [Development](#useful-commands)
+4. [Documentation](#documentation)
     1. [Philosophy](#philosophy)
     2. [Writing a Program in Quilt](#writing-a-program-in-quilt)
         * [Roads](#roads)
@@ -16,7 +21,13 @@ A programming language
         * [Memory](#memory)
         * [Loops, Conditionals, and Halting](#loops-conditionals-and-halting)
     3. [Quilt Instructions](#quilt-instructions)
-4. [Examples](#examples)
+5. [Examples](#examples)
+
+## Installation
+
+```
+cargo install quilt-lang
+```
 
 ## Usage
 
