@@ -25,8 +25,14 @@ A programming language
 
 ## Installation
 
+Using `cargo`:
 ```
 cargo install quilt-lang
+```
+
+Using `docker`:
+```
+docker run --rm ghcr.io/quilt-lang/quilt
 ```
 
 ## Usage
@@ -42,6 +48,7 @@ quilt --pixel-size 20 examples/hello_world_x20.png
 
 - Run all checks: `make check`
 - Scale images using ImageMagick: `convert -scale 500% foo.png foo_x5.png`
+- Build docker image: `docker build . -t quilt:<TAG>`
 
 ## Documentation
 
