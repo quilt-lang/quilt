@@ -4,33 +4,22 @@ use image::Rgba;
 use tui::buffer::Buffer;
 use tui::layout::Rect;
 use tui::style::Color;
-use tui::widgets::Block;
 
 /// A tui-rs Widget which displays a pixel
-pub struct Pixel<'a> {
-    /// A block to wrap the widget in
-    block: Option<Block<'a>>,
+pub struct Pixel {
     /// Pixel position
     pub position: MatrixPoint,
     /// Pixel color
     color: Rgba<u8>,
 }
 
-impl<'a> Pixel<'a> {
+impl Pixel {
     /// Construct an Pixel widget with a single image.
-    pub fn new(x: u16, y: u16, color: Rgba<u8>) -> Pixel<'a> {
-        Pixel {
-            block: None,
+    pub fn new(x: u16, y: u16, color: Rgba<u8>) -> Self {
+        Self {
             position: MatrixPoint(x as usize, y as usize),
             color,
         }
-    }
-
-    /// Set the widget to use the provided block.
-    #[allow(unused)]
-    pub fn block(mut self, block: Block<'a>) -> Pixel<'a> {
-        self.block = Some(block);
-        self
     }
 
     pub fn draw_pixel(&self, glyph: char, area: Rect, buf: &mut Buffer) {
@@ -44,7 +33,7 @@ impl<'a> Pixel<'a> {
     }
 }
 
-impl From<&crate::Pixel> for Pixel<'_> {
+impl From<&crate::Pixel> for Pixel {
     fn from(p: &crate::Pixel) -> Self {
         Self::new(p.point.0 as u16, p.point.1 as u16, p.hsl.into())
     }

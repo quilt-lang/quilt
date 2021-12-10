@@ -1,4 +1,5 @@
 use image::Rgba;
+use std::fmt::{Display, Formatter};
 
 /// Color represented in HSL for Quilt
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -42,6 +43,12 @@ impl From<Hsl> for HslFloats {
             s: hslq.s as f64 / 100.0,
             l: hslq.l as f64 / 100.0,
         }
+    }
+}
+
+impl Display for Hsl {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "h: {}\ns: {}\nl: {}", self.h, self.s, self.l)
     }
 }
 

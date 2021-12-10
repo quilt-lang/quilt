@@ -2,13 +2,18 @@ mod editor;
 mod pixel_widget;
 mod util;
 
-use crate::vm::Direction;
+use crate::vm::Direction::{East, North, South, West};
 use editor::ImageEditor;
 use util::event::{Event, Events};
 
 use std::io;
 use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
-use tui::{backend::TermionBackend, layout::Rect, Terminal};
+use tui::{
+    backend::TermionBackend,
+    layout::{Constraint, Direction, Layout, Rect},
+    widgets::{Block, Borders, Paragraph},
+    Terminal,
+};
 
 pub fn run(file: &str, pixel_size: u32) {
     // Terminal initialization
@@ -26,14 +31,17 @@ pub fn run(file: &str, pixel_size: u32) {
         // Draw UI
         terminal
             .draw(|f| {
-                let size = f.size();
-                let rect = Rect {
-                    x: 2,
-                    y: 1,
-                    width: size.width,
-                    height: size.height,
-                };
-                f.render_widget(&editor, rect);
+                let chunks = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([Constraint::Percentage(80), Constraint::Percentage(20)].as_ref())
+                    .split(f.size());
+                editor.block(Block::default().borders(Borders::ALL));
+                f.render_widget(&editor, chunks[0]);
+                f.render_widget(
+                    Paragraph::new(editor.pixel_info())
+                        .block(Block::default().borders(Borders::ALL)),
+                    chunks[1],
+                );
             })
             .unwrap();
 
@@ -41,10 +49,10 @@ pub fn run(file: &str, pixel_size: u32) {
         if let Event::Input(input) = events.next().unwrap() {
             match input {
                 Key::Ctrl('c') | Key::Char('q') => break,
-                Key::Char('h') | Key::Left => editor.go(Direction::West, 1),
-                Key::Char('l') | Key::Right => editor.go(Direction::East, 1),
-                Key::Char('j') | Key::Down => editor.go(Direction::South, 1),
-                Key::Char('k') | Key::Up => editor.go(Direction::North, 1),
+                Key::Char('h') | Key::Left => editor.go(West, 1),
+                Key::Char('l') | Key::Right => editor.go(East, 1),
+                Key::Char('j') | Key::Down => editor.go(South, 1),
+                Key::Char('k') | Key::Up => editor.go(North, 1),
                 _ => (),
             };
         }
