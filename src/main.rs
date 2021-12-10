@@ -16,5 +16,5 @@ pub struct Args {
 
 fn main() {
     let args = Args::parse();
-    quilt::run(&args.file, args.pixel_size as u32, io::stdout());
+    quilt_lang::run(&args.file, args.pixel_size as u32, io::stdout());
 }
