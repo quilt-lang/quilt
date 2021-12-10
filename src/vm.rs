@@ -25,27 +25,23 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn opposite(&self) -> Direction {
+    pub fn clockwise(&self) -> Direction {
         match self {
-            Direction::North => Direction::South,
-            Direction::West => Direction::East,
-            Direction::South => Direction::North,
-            Direction::East => Direction::West,
-        }
-    }
-
-    pub fn counter_clockwise(&self) -> Direction {
-        match self {
-            Direction::North => Direction::West,
-            Direction::West => Direction::South,
-            Direction::South => Direction::East,
-            Direction::East => Direction::North,
+            Direction::North => Direction::East,
+            Direction::East => Direction::South,
+            Direction::South => Direction::West,
+            Direction::West => Direction::North,
         }
     }
 
     #[inline]
-    pub fn clockwise(&self) -> Direction {
-        self.opposite().counter_clockwise()
+    pub fn opposite(&self) -> Direction {
+        self.clockwise().clockwise()
+    }
+
+    #[inline]
+    pub fn counter_clockwise(&self) -> Direction {
+        self.opposite().clockwise()
     }
 }
 
@@ -92,7 +88,6 @@ impl<T: Write> VM<T> {
                 Condition::Equal
             };
 
-            // does the instruction take an arg?
             let arg = if instruction.takes_arg() {
                 let arg_pixel = self.get_next_instruction();
                 self.pc = arg_pixel.point;
