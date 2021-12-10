@@ -26,26 +26,8 @@ impl<T: Copy> Matrix<T> {
         Matrix { matrix }
     }
 
-    pub fn cell_exists(&self, point: MatrixPoint) -> bool {
-        let MatrixPoint(x, y) = point;
-
-        if y >= self.matrix.len() {
-            return false;
-        }
-
-        if let Some(row) = self.matrix.get(0) {
-            x < row.len()
-        } else {
-            false
-        }
-    }
-
     pub fn get(&self, point: MatrixPoint) -> Option<T> {
-        if self.cell_exists(point) {
-            Some(self.matrix[point.1][point.0])
-        } else {
-            None
-        }
+        self.matrix.get(point.1)?.get(point.0).copied()
     }
 
     /// Tries to move a point in the provided direction
