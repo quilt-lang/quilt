@@ -16,6 +16,8 @@ use tui::{
     Terminal,
 };
 
+use anyhow::anyhow;
+
 pub fn run(file: &str, pixel_size: u32) {
     // Terminal initialization
     let stdout = io::stdout().into_raw_mode().unwrap();
@@ -26,7 +28,8 @@ pub fn run(file: &str, pixel_size: u32) {
     let mut editor = ImageEditor::new(file, pixel_size);
 
     // Setup event handlers
-    let events = Events::new();
+    let mut events = Events::new();
+    events.disable_exit_key();
 
     loop {
         // Draw UI
@@ -48,7 +51,8 @@ pub fn run(file: &str, pixel_size: u32) {
                     info_chunks[0],
                 );
                 let input_box = match editor.state() {
-                    state @ State::Replace => {
+                    state @ State::Normal => format!("{:?}", state),
+                    state => {
                         let input = editor.input();
                         f.set_cursor(
                             info_chunks[1].x + input.len() as u16 + 3,
@@ -56,7 +60,6 @@ pub fn run(file: &str, pixel_size: u32) {
                         );
                         format!("{:?}\n> {}", state, editor.input())
                     }
-                    state => format!("{:?}", state),
                 };
                 f.render_widget(
                     Paragraph::new(input_box).block(Block::default().borders(Borders::ALL).style(
@@ -80,13 +83,33 @@ pub fn run(file: &str, pixel_size: u32) {
                     Key::Char('j') | Key::Down => editor.go(South, 1),
                     Key::Char('k') | Key::Up => editor.go(North, 1),
                     Key::Char('r') => editor.set_state(State::Replace),
+                    Key::Char(':') => editor.set_state(State::Command),
                     _ => (),
                 },
-                State::Replace => match input {
+                state => match input {
                     Key::Ctrl('c') | Key::Esc => editor.set_state(State::Normal),
                     Key::Char('\n') => {
+                        let input = editor.submit();
                         // TODO: notify user of error
-                        let _ = editor.submit();
+                        match state {
+                            State::Replace => {
+                                if let Ok(hue) = input.parse() {
+                                    editor.replace_current(hue);
+                                }
+                            }
+                            State::Command => {
+                                let result = match input.as_str() {
+                                    "w" | "wq" => editor.save(),
+                                    "q" | "quit" => break,
+                                    _ => Err(anyhow!("unrecognized command")),
+                                };
+                                // TODO: notify user of error
+                                if result.is_ok() && input.as_str().ends_with("q") {
+                                    break;
+                                }
+                            }
+                            _ => unreachable!(),
+                        }
                     }
                     Key::Backspace => editor.pop(),
                     Key::Char(c) => editor.push(c),

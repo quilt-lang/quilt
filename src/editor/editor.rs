@@ -27,6 +27,7 @@ pub struct ImageEditor<'a> {
 pub enum State {
     Normal,
     Replace,
+    Command,
 }
 
 impl<'a> ImageEditor<'a> {
@@ -92,10 +93,20 @@ impl<'a> ImageEditor<'a> {
         self.input.push(c);
     }
 
-    pub fn submit(&mut self) -> Result<()> {
-        let hue = self.input.parse::<u16>()?.clamp(0, 359);
-        self.pixels[self.position].hsl.h = hue;
-        Ok(self.set_state(State::Normal))
+    pub fn submit(&mut self) -> String {
+        let input = self.input.clone();
+        self.set_state(State::Normal);
+        input
+    }
+
+    pub fn replace_current(&mut self, hue: u16) {
+        self.pixels[self.position].hsl.h = hue.clamp(0, 359);
+    }
+
+    /// Save to disk
+    pub fn save(&mut self) -> Result<()> {
+        // TODO: figure out how to write to disk
+        Ok(())
     }
 }
 
