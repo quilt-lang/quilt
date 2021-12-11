@@ -84,6 +84,7 @@ pub fn run(file: &str, pixel_size: u32) {
                     Key::Char('k') | Key::Up => editor.go(North, 1),
                     Key::Char('r') => editor.set_state(State::Replace),
                     Key::Char(':') => editor.set_state(State::Command),
+                    Key::Char('.') => editor.repeat(),
                     _ => (),
                 },
                 state => match input {

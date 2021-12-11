@@ -21,6 +21,8 @@ pub struct ImageEditor<'a> {
     state: State,
     /// Input buffer for replace mode
     input: String,
+    /// Last hue replaced for repeat command
+    last_hue: Option<u16>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -40,6 +42,7 @@ impl<'a> ImageEditor<'a> {
             block: None,
             state: State::Normal,
             input: String::new(),
+            last_hue: None,
         }
     }
 
@@ -101,12 +104,19 @@ impl<'a> ImageEditor<'a> {
 
     pub fn replace_current(&mut self, hue: u16) {
         self.pixels[self.position].hsl.h = hue.clamp(0, 359);
+        self.last_hue = Some(hue);
     }
 
     /// Save to disk
     pub fn save(&mut self) -> Result<()> {
         // TODO: figure out how to write to disk
         Ok(())
+    }
+
+    pub fn repeat(&mut self) {
+        if let Some(hue) = self.last_hue {
+            self.replace_current(hue);
+        }
     }
 }
 
