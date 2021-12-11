@@ -3,7 +3,7 @@ mod pixel_widget;
 mod util;
 
 use crate::vm::Direction::{East, North, South, West};
-use editor::ImageEditor;
+use editor::{ImageEditor, State};
 use util::event::{Event, Events};
 
 use std::io;
@@ -11,6 +11,7 @@ use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::Altern
 use tui::{
     backend::TermionBackend,
     layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Style},
     widgets::{Block, Borders, Paragraph},
     Terminal,
 };
@@ -37,24 +38,61 @@ pub fn run(file: &str, pixel_size: u32) {
                     .split(f.size());
                 editor.block(Block::default().borders(Borders::ALL));
                 f.render_widget(&editor, chunks[0]);
+                let info_chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints([Constraint::Max(9), Constraint::Max(10)])
+                    .split(chunks[1]);
                 f.render_widget(
                     Paragraph::new(editor.pixel_info())
                         .block(Block::default().borders(Borders::ALL)),
-                    chunks[1],
+                    info_chunks[0],
+                );
+                let input_box = match editor.state() {
+                    state @ State::Replace => {
+                        let input = editor.input();
+                        f.set_cursor(
+                            info_chunks[1].x + input.len() as u16 + 3,
+                            info_chunks[1].y + 2,
+                        );
+                        format!("{:?}\n> {}", state, editor.input())
+                    }
+                    state => format!("{:?}", state),
+                };
+                f.render_widget(
+                    Paragraph::new(input_box).block(Block::default().borders(Borders::ALL).style(
+                        Style::default().fg(match editor.state() {
+                            State::Replace => Color::Yellow,
+                            _ => Color::White,
+                        }),
+                    )),
+                    info_chunks[1],
                 );
             })
             .unwrap();
 
         // Handle input
         if let Event::Input(input) = events.next().unwrap() {
-            match input {
-                Key::Ctrl('c') | Key::Char('q') => break,
-                Key::Char('h') | Key::Left => editor.go(West, 1),
-                Key::Char('l') | Key::Right => editor.go(East, 1),
-                Key::Char('j') | Key::Down => editor.go(South, 1),
-                Key::Char('k') | Key::Up => editor.go(North, 1),
-                _ => (),
-            };
+            match editor.state() {
+                State::Normal => match input {
+                    Key::Ctrl('c') | Key::Char('q') => break,
+                    Key::Char('h') | Key::Left => editor.go(West, 1),
+                    Key::Char('l') | Key::Right => editor.go(East, 1),
+                    Key::Char('j') | Key::Down => editor.go(South, 1),
+                    Key::Char('k') | Key::Up => editor.go(North, 1),
+                    Key::Char('r') => editor.set_state(State::Replace),
+                    _ => (),
+                },
+                State::Replace => match input {
+                    Key::Ctrl('c') | Key::Esc => editor.set_state(State::Normal),
+                    Key::Char('\n') => {
+                        // TODO: notify user of error
+                        let _ = editor.submit();
+                    }
+                    Key::Backspace => editor.pop(),
+                    Key::Char(c) => editor.push(c),
+                    _ => (),
+                },
+            }
         }
     }
 }

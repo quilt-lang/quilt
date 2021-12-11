@@ -23,12 +23,12 @@ impl Pixel {
     }
 
     pub fn draw_pixel(&self, glyph: char, area: Rect, buf: &mut Buffer) {
-        let x = self.position.0 as u16;
+        let x = self.position.0 as u16 * 2;
         let y = self.position.1 as u16;
         let color = Color::Rgb(self.color.0[0], self.color.0[1], self.color.0[2]);
-        let cell = buf.get_mut(area.left() + x * 2, area.top() + y);
+        let cell = buf.get_mut(area.left() + x, area.top() + y);
         cell.set_char(glyph).set_fg(color);
-        let cell = buf.get_mut(area.left() + x * 2 + 1, area.top() + y);
+        let cell = buf.get_mut(area.left() + x + 1, area.top() + y);
         cell.set_char(glyph).set_fg(color);
     }
 }
