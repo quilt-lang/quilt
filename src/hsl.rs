@@ -136,7 +136,7 @@ impl HslFloats {
     }
 
     /// Convert HSL color to RGB
-    #[allow(unused, clippy::many_single_char_names)]
+    #[allow(clippy::many_single_char_names)]
     pub fn to_rgb(self) -> (u8, u8, u8) {
         if self.s == 0.0 {
             // Achromatic, i.e., grey.

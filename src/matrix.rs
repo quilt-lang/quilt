@@ -1,4 +1,6 @@
 use crate::vm::Direction::{self, East, North, South, West};
+use crate::Pixel;
+use image::RgbaImage;
 use std::ops::{Index, IndexMut};
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
@@ -56,6 +58,21 @@ impl<T: Copy> Index<MatrixPoint> for Matrix<T> {
 impl<T: Copy> IndexMut<MatrixPoint> for Matrix<T> {
     fn index_mut(&mut self, index: MatrixPoint) -> &mut Self::Output {
         &mut self.matrix[index.1][index.0]
+    }
+}
+
+impl From<&Matrix<Pixel>> for RgbaImage {
+    fn from(matrix: &Matrix<Pixel>) -> Self {
+        let height = matrix.matrix.len();
+        let width = matrix.matrix.get(0).map_or(0, |row| row.len());
+        let mut img = RgbaImage::new(width as u32, height as u32);
+        for y in 0..height {
+            for x in 0..width {
+                let pixel = matrix[MatrixPoint(x, y)];
+                img.put_pixel(x as u32, y as u32, pixel.hsl.into());
+            }
+        }
+        img
     }
 }
 

@@ -100,7 +100,7 @@ pub fn run(file: &str, pixel_size: u32) {
                             }
                             State::Command => {
                                 let result = match input.as_str() {
-                                    "w" | "wq" => editor.save(),
+                                    "w" | "wq" | "write" => editor.save(),
                                     "q" | "quit" => break,
                                     _ => Err(anyhow!("unrecognized command")),
                                 };

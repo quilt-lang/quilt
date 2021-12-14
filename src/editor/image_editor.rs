@@ -4,6 +4,7 @@ use crate::vm::Direction;
 use crate::{Matrix, MatrixPoint};
 
 use anyhow::Result;
+use image::RgbaImage;
 use tui::buffer::Buffer;
 use tui::layout::Rect;
 use tui::widgets::{Block, Widget};
@@ -23,6 +24,8 @@ pub struct ImageEditor<'a> {
     input: String,
     /// Last hue replaced for repeat command
     last_hue: Option<u16>,
+    /// Path to currently opened file
+    path: String,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -43,6 +46,7 @@ impl<'a> ImageEditor<'a> {
             state: State::Normal,
             input: String::new(),
             last_hue: None,
+            path: file.to_string(),
         }
     }
 
@@ -109,7 +113,8 @@ impl<'a> ImageEditor<'a> {
 
     /// Save to disk
     pub fn save(&mut self) -> Result<()> {
-        // TODO: figure out how to write to disk
+        let img: RgbaImage = (&self.pixels).into();
+        img.save(self.path.as_str())?;
         Ok(())
     }
 
