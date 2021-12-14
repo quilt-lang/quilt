@@ -32,7 +32,7 @@ cargo install quilt-lang
 
 Using `docker`:
 ```
-docker run --rm ghcr.io/quilt-lang/quilt
+docker run --rm -t ghcr.io/quilt-lang/quilt
 ```
 
 ## Usage

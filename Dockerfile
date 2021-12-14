@@ -7,5 +7,6 @@ COPY . .
 RUN cargo install --path .
 
 FROM scratch
+LABEL org.opencontainers.image.source https://github.com/quilt-lang/quilt
 COPY --from=builder /usr/local/cargo/bin/quilt /usr/local/bin/quilt
 ENTRYPOINT ["quilt"]
