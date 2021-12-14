@@ -1,16 +1,16 @@
-mod editor;
+mod image_editor;
 mod pixel_widget;
 mod util;
 
 use crate::vm::Direction::{East, North, South, West};
-use editor::{ImageEditor, State};
+use image_editor::{ImageEditor, State};
 use util::event::{Event, Events};
 
 use std::io;
 use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
 use tui::{
     backend::TermionBackend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout},
     style::{Color, Style},
     widgets::{Block, Borders, Paragraph},
     Terminal,
@@ -105,7 +105,7 @@ pub fn run(file: &str, pixel_size: u32) {
                                     _ => Err(anyhow!("unrecognized command")),
                                 };
                                 // TODO: notify user of error
-                                if result.is_ok() && input.as_str().ends_with("q") {
+                                if result.is_ok() && input.as_str().ends_with('q') {
                                     break;
                                 }
                             }

@@ -13,7 +13,7 @@ const BLOCK_FULL: char = '\u{2588}';
 
 pub struct ImageEditor<'a> {
     pixels: Matrix<crate::Pixel>,
-    pixel_size: u32,
+    _pixel_size: u32,
     position: MatrixPoint,
     /// A block to wrap the widget in
     block: Option<Block<'a>>,
@@ -37,7 +37,7 @@ impl<'a> ImageEditor<'a> {
         let pixels = parse(pixels(file, pixel_size).unwrap());
         Self {
             pixels,
-            pixel_size,
+            _pixel_size: pixel_size,
             position: MatrixPoint::default(),
             block: None,
             state: State::Normal,
@@ -72,7 +72,7 @@ impl<'a> ImageEditor<'a> {
                     p.as_condition()
                 )
             })
-            .unwrap_or("error".to_string())
+            .unwrap_or_else(|| "error".to_string())
     }
 
     pub fn state(&self) -> State {
