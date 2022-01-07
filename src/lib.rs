@@ -1,4 +1,5 @@
 mod condition;
+pub mod editor;
 mod hsl;
 mod instruction;
 mod matrix;
@@ -7,6 +8,7 @@ mod pixel;
 mod vm;
 
 pub use condition::Condition;
+pub use hsl::Hsl;
 pub use instruction::Instruction;
 pub use matrix::{Matrix, MatrixPoint};
 pub use pixel::Pixel;

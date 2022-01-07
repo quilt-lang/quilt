@@ -117,7 +117,7 @@ impl<T: Write> VM<T> {
 
         match instruction {
             Instruction::Road | Instruction::Start | Instruction::None => Ok(()),
-            Instruction::Push => Ok(self.push(arg.unwrap().value as i64)),
+            Instruction::Push => Ok(self.push(arg.unwrap().value() as i64)),
             Instruction::Add => self.infix(|a, b| a + b),
             Instruction::Sub => self.infix(|a, b| a - b),
             Instruction::Mult => self.infix(|a, b| a * b),
@@ -130,10 +130,10 @@ impl<T: Write> VM<T> {
             Instruction::PushA => Ok(self.push(self.tape[self.register_a as usize])),
             Instruction::PopUntil => self.pop_until(condition),
             Instruction::Save => {
-                Ok(self.tape[self.register_a as usize] = arg.unwrap().value as i64)
+                Ok(self.tape[self.register_a as usize] = arg.unwrap().value() as i64)
             }
             Instruction::PopA => Ok(self.tape[self.register_a as usize] = self.pop()?),
-            Instruction::MovA => Ok(self.register_a = arg.unwrap().value),
+            Instruction::MovA => Ok(self.register_a = arg.unwrap().value()),
             Instruction::And => self.infix(|a, b| a & b),
             Instruction::Or => self.infix(|a, b| a | b),
             Instruction::Xor => self.infix(|a, b| a ^ b),
@@ -283,7 +283,7 @@ mod test {
     use super::{Direction, VM};
     use crate::pixel::START;
     use crate::vm::Direction::{East, North, South, West};
-    use crate::{Matrix, MatrixPoint, Pixel};
+    use crate::{Hsl, Matrix, MatrixPoint, Pixel};
     use std::io;
 
     fn init_vm(matrix: Vec<Vec<u16>>) -> VM<io::Stdout> {
@@ -301,7 +301,14 @@ mod test {
         for (row_idx, row) in pixels.iter().enumerate() {
             let mut row_vec = vec![];
             for (col_idx, pixel) in row.iter().enumerate() {
-                row_vec.push(Pixel::new(*pixel, MatrixPoint(col_idx, row_idx)));
+                row_vec.push(Pixel::new(
+                    Hsl {
+                        h: *pixel,
+                        s: 0,
+                        l: 0,
+                    },
+                    MatrixPoint(col_idx, row_idx),
+                ));
             }
             v.push(row_vec);
         }
@@ -346,7 +353,7 @@ mod test {
         for (idx, (dir, pixel)) in actual.iter().enumerate() {
             let (expected_dir, expected_pixel) = expected[idx];
             assert_eq!(*dir, expected_dir);
-            assert_eq!(pixel.value, expected_pixel);
+            assert_eq!(pixel.value(), expected_pixel);
         }
     }
 
@@ -514,7 +521,7 @@ mod test {
         assert_eq!(vm.pc, MatrixPoint(0, 1));
         let pixel = vm.get_next_instruction();
 
-        assert_eq!(pixel.value, 180);
+        assert_eq!(pixel.value(), 180);
     }
 
     #[test]
@@ -529,7 +536,7 @@ mod test {
 
         let pixel = vm.get_next_instruction();
 
-        assert_eq!(pixel.value, 1);
+        assert_eq!(pixel.value(), 1);
     }
 
     #[test]
@@ -545,7 +552,7 @@ mod test {
         let pixel = vm.get_next_instruction();
 
         // take the road to the 'right' (south)
-        assert_eq!(pixel.value, 180);
+        assert_eq!(pixel.value(), 180);
     }
 
     #[test]
@@ -561,7 +568,7 @@ mod test {
         let pixel = vm.get_next_instruction();
 
         // turn around
-        assert_eq!(pixel.value, 180);
+        assert_eq!(pixel.value(), 180);
     }
 
     #[test]
@@ -577,7 +584,7 @@ mod test {
         let pixel = vm.get_next_instruction();
 
         // go 'left'
-        assert_eq!(pixel.value, 180);
+        assert_eq!(pixel.value(), 180);
     }
 
     #[test]
@@ -592,7 +599,7 @@ mod test {
 
         let pixel = vm.get_next_instruction();
 
-        assert_eq!(pixel.value, 37);
+        assert_eq!(pixel.value(), 37);
     }
 
     #[test]
@@ -608,7 +615,7 @@ mod test {
         let pixel = vm.get_next_instruction();
 
         // don't turn around if there's another road available
-        assert_eq!(pixel.value, 180);
+        assert_eq!(pixel.value(), 180);
     }
 
     #[test]
@@ -624,6 +631,6 @@ mod test {
         let pixel = vm.get_next_instruction();
 
         // go north
-        assert_eq!(pixel.value, 180);
+        assert_eq!(pixel.value(), 180);
     }
 }

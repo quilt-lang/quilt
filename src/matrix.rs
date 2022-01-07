@@ -1,6 +1,9 @@
 use crate::vm::Direction::{self, East, North, South, West};
+use crate::Pixel;
+use image::RgbaImage;
+use std::ops::{Index, IndexMut};
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct MatrixPoint(pub usize, pub usize);
 
 impl MatrixPoint {
@@ -45,6 +48,34 @@ impl<T: Copy> Matrix<T> {
     }
 }
 
+impl<T: Copy> Index<MatrixPoint> for Matrix<T> {
+    type Output = T;
+    fn index(&self, index: MatrixPoint) -> &Self::Output {
+        &self.matrix[index.1][index.0]
+    }
+}
+
+impl<T: Copy> IndexMut<MatrixPoint> for Matrix<T> {
+    fn index_mut(&mut self, index: MatrixPoint) -> &mut Self::Output {
+        &mut self.matrix[index.1][index.0]
+    }
+}
+
+impl From<&Matrix<Pixel>> for RgbaImage {
+    fn from(matrix: &Matrix<Pixel>) -> Self {
+        let height = matrix.matrix.len();
+        let width = matrix.matrix.get(0).map_or(0, |row| row.len());
+        let mut img = RgbaImage::new(width as u32, height as u32);
+        for y in 0..height {
+            for x in 0..width {
+                let pixel = matrix[MatrixPoint(x, y)];
+                img.put_pixel(x as u32, y as u32, pixel.hsl.into());
+            }
+        }
+        img
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::vm::Direction;
@@ -75,5 +106,15 @@ mod test {
         assert_eq!(m.go(p, Direction::West).unwrap(), 4);
         assert_eq!(m.go(p, Direction::East).unwrap(), 6);
         assert_eq!(m.go(p, Direction::South).unwrap(), 8);
+    }
+
+    #[test]
+    fn test_index() {
+        let mut m = create_test_matrix();
+        let p = super::MatrixPoint(1, 1);
+        assert_eq!(m[p], 5);
+
+        m[p] = 1337;
+        assert_eq!(m[p], 1337);
     }
 }

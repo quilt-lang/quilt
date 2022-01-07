@@ -1,7 +1,8 @@
 use image::Rgba;
+use std::fmt::{Display, Formatter};
 
 /// Color represented in HSL for Quilt
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Hsl {
     /// Hue in 0-360 degree
     pub h: u16,
@@ -14,6 +15,14 @@ pub struct Hsl {
 impl From<Rgba<u8>> for Hsl {
     fn from(rgb: Rgba<u8>) -> Self {
         HslFloats::from_rgb(&rgb.0).into()
+    }
+}
+
+impl From<Hsl> for Rgba<u8> {
+    fn from(hsl: Hsl) -> Self {
+        let hslf: HslFloats = hsl.into();
+        let (r, g, b) = hslf.to_rgb();
+        Self([r, g, b, 0xff])
     }
 }
 
@@ -34,6 +43,12 @@ impl From<Hsl> for HslFloats {
             s: hslq.s as f64 / 100.0,
             l: hslq.l as f64 / 100.0,
         }
+    }
+}
+
+impl Display for Hsl {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "h: {}\ns: {}\nl: {}", self.h, self.s, self.l)
     }
 }
 
@@ -121,7 +136,7 @@ impl HslFloats {
     }
 
     /// Convert HSL color to RGB
-    #[allow(unused, clippy::many_single_char_names)]
+    #[allow(clippy::many_single_char_names)]
     pub fn to_rgb(self) -> (u8, u8, u8) {
         if self.s == 0.0 {
             // Achromatic, i.e., grey.
